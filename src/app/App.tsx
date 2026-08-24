@@ -468,15 +468,16 @@ export function App(props: {
   })
 
   // `AVAILABLE` lists the registry rather than waiting to be searched, so opening
-  // the panel is what has to guarantee there is a catalog to list. `ready` is the
-  // shared first fetch, so this costs nothing when the startup check already ran,
-  // and it is deliberately not gated on `extensionUpdates`: that setting silences
-  // druk's own offers, and opening this panel is the user asking.
+  // the panel is what has to guarantee there is a catalog to list — and `openPanel`
+  // fetches a fresh one the first time in a session rather than settling for
+  // whatever the cache holds, since the panel is where someone goes to find an
+  // extension published since. Deliberately not gated on `extensionUpdates`: that
+  // setting silences druk's own offers, and opening this panel is the user asking.
   createEffect(
     on(
       () => panes.sidebar() && panes.view() === 'extensions',
       showing => {
-        if (showing) void market.ready()
+        if (showing) void market.openPanel()
       },
     ),
   )

@@ -334,8 +334,12 @@ Five things hold it together:
   preinstalled set is spelled out rather than globbed.
 - **The catalog is cached and best-effort.** `$XDG_CACHE_HOME/druk/market.json`,
   read synchronously at startup so the palette has a market before any request, and
-  refreshed after six hours. Offline, the cache is the market; with neither, the
-  Extensions menu says so and nothing else changes.
+  refreshed after thirty minutes — the market is a folder on `main`, so an extension
+  merged today is live today and a long cache is a launch that cannot offer it. The
+  extensions panel's first open in a session refetches whatever the cache's age says,
+  since that panel is where someone looks for an extension published since. Offline,
+  the cache is the market; with neither, the Extensions menu says so and nothing else
+  changes.
 
 `bun run extensions` regenerates the index from the manifests, validating each one;
 the committed index is asserted to match, so forgetting it fails `bun run check`.
@@ -747,7 +751,7 @@ is just a diff against the empty tree.
 - **Network.** druk makes two kinds of request, both at startup and both
   best-effort (2.5s timeout, failures ignored): one npm registry lookup for a newer
   druk, disabled by `checkUpdates: false`, and the extension market's `index.json`,
-  disabled by `extensionUpdates: false` and cached for six hours in between. When that
+  disabled by `extensionUpdates: false` and cached for thirty minutes in between. When that
   catalog names a newer version of an installed market extension, its manifest is
   fetched and applied in the same pass — an update is not a new install, so it is not
   asked about. Everything

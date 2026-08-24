@@ -306,6 +306,31 @@ test('the panel lists the whole market, not only what was searched for', async (
   await pressEscape(t)
   expect(t.captureCharFrame()).toContain('AVAILABLE')
 })
+test('opening the panel refetches a catalog the cache still calls fresh', async () => {
+  // Written this instant, so nothing about staleness makes druk fetch — and the
+  // extension published since is the one the panel exists to show.
+  const cache = join(process.env.XDG_CACHE_HOME!, 'druk', 'market.json')
+  mkdirSync(join(cache, '..'), { recursive: true })
+  writeFileSync(cache, JSON.stringify({ at: Date.now(), extensions: [] }))
+
+  const dir = fixture({ 'a.ts': 'const a = 1\n' })
+  const t = await launch(dir, { extensionUpdates: false }, { height: 40 })
+  await settle(t)
+  expect(requested).toEqual([])
+
+  await runCommand(t, 'Extensions panel')
+  await untilFrame(t, 'AVAILABLE')
+  expect(t.captureCharFrame()).toContain('Go')
+  expect(requested.filter(url => url.endsWith('index.json'))).toHaveLength(1)
+
+  // Once per session: the panel is in the Shift+Tab cycle, and a fetch per visit
+  // would be a fetch per cycle.
+  await runCommand(t, 'Extensions panel')
+  await runCommand(t, 'Extensions panel')
+  await settle(t)
+  expect(requested.filter(url => url.endsWith('index.json'))).toHaveLength(1)
+})
+
 test('a search that matches most of a big market says what it left out', async () => {
   const dir = fixture({ 'a.ts': 'const a = 1\n' })
   const t = await launch(dir, { extensionUpdates: true }, { height: 40 })

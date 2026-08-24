@@ -52,8 +52,14 @@ const MAX_ASSET_BYTES = 8 * 1024 * 1024
 /** Assets are megabytes where a manifest is kilobytes; the wait is deliberate. */
 const ASSET_TIMEOUT_MS = 30_000
 
-/** How old the cached catalog may be before it is fetched again. */
-const CATALOG_MAX_AGE_MS = 6 * 60 * 60 * 1000
+/**
+ * How old the cached catalog may be before it is fetched again. Short, because
+ * the market is a folder on `main`: an extension merged an hour ago is live for
+ * everyone the moment it lands, and a launch that skipped the fetch is a launch
+ * that cannot offer it. The cache still earns its keep — it is what a run inside
+ * that window, and every offline run, lists from.
+ */
+const CATALOG_MAX_AGE_MS = 30 * 60 * 1000
 
 /** One extension as the catalog lists it — enough to show and to match, never to run. */
 export interface MarketEntry {

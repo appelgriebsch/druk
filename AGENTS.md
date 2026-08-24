@@ -443,9 +443,13 @@ uninstalling one that is not built in after a confirm that names the language
 servers druk fetched for it, since those go with it and those are the megabytes;
 `AVAILABLE` lists the whole registry minus what is already installed, so what can
 be had is on screen without having to guess a name first — opening the view is
-what fetches the catalog (`market.ready()`, the shared first fetch, from an effect
-in `App.tsx`; deliberately not gated on `extensionUpdates`, which silences druk's
-*own* offers, where opening this panel is the user asking) — and both headings
+what fetches the catalog (`market.openPanel()`, from an effect in `App.tsx`: the
+first open of a session fetches the registry *now* rather than reading the disk
+cache, since this panel is where an extension published since a launch is looked
+for, and every later open falls back to `ready()`, the shared first fetch — a
+round trip per visit would be one per Shift+Tab cycle; deliberately not gated on
+`extensionUpdates`, which silences druk's *own* offers, where opening this panel
+is the user asking) — and both headings
 fold, since that list is long by default; a search box drawn under the header at
 all times (`/`, or a click, starts typing into it) narrows both sections at once,
 landing the cursor on its first hit so the Enter after it installs; every extension has

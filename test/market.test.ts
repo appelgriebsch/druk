@@ -161,7 +161,7 @@ test('the cache survives a round trip and knows when it is old', () => {
   const cached = readCachedCatalog(file)
   expect(cached?.extensions.map(entry => entry.id)).toEqual(['nim'])
   expect(isStale(cached, 1000 + 60_000)).toBe(false)
-  expect(isStale(cached, 1000 + 7 * 60 * 60 * 1000)).toBe(true)
+  expect(isStale(cached, 1000 + 31 * 60 * 1000)).toBe(true)
 })
 
 test('only an installed extension with a lower version is an update', () => {

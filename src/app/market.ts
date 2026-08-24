@@ -119,6 +119,21 @@ export function createMarket(deps: {
   const ready = (): Promise<MarketEntry[]> => (loading ??= refresh())
 
   /**
+   * The extensions panel opening. The first one in a session fetches whatever the
+   * registry holds *now*, cache or no cache: `AVAILABLE` is the whole market, and
+   * a list assembled from a catalog written before an extension was published is
+   * a panel that cannot show it however hard it is searched. Once per session,
+   * because the panel is in the Shift+Tab cycle and a round trip per visit would
+   * be one per cycle; later opens fall back to the shared first fetch.
+   */
+  let opened = false
+  const openPanel = (): Promise<MarketEntry[]> => {
+    if (opened) return ready()
+    opened = true
+    return (loading = refresh(true))
+  }
+
+  /**
    * Fetch `id`'s manifest and ask. Silent about an extension it cannot fetch when
    * the offer was druk's idea rather than the user's — an editor that reports a
    * failed background request on every launch is worse than one that says
@@ -372,6 +387,7 @@ export function createMarket(deps: {
 
   return {
     catalog,
+    openPanel,
     updates,
     refresh,
     ready,
