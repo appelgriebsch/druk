@@ -276,6 +276,129 @@ h1.comment {
   background: var(--select);
 }
 
+/* --- the extensions page -------------------------------------------- */
+
+.filter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.5rem;
+  margin-top: 0.75rem;
+}
+
+.filter-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5ch;
+  flex: 1 1 18rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.filter-line .ps1 {
+  color: var(--green);
+}
+
+.filter-input {
+  flex: 1;
+  font: inherit;
+  color: var(--fg);
+  background: none;
+  border: none;
+  padding: 0.15rem 0;
+}
+
+.filter-input::placeholder {
+  color: var(--faint);
+}
+
+.filter-input:focus-visible {
+  outline: none;
+}
+
+.filter-line:focus-within {
+  border-bottom-color: var(--constant);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5ch;
+}
+
+.chip {
+  font: inherit;
+  color: var(--dim);
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 0.75ch;
+  cursor: pointer;
+}
+
+.chip:hover {
+  color: var(--fg);
+  border-color: var(--faint);
+}
+
+.chip.on {
+  color: var(--fg);
+  background: var(--select);
+  border-color: var(--constant);
+}
+
+.group {
+  margin-top: 2rem;
+}
+
+.group-name {
+  color: var(--tag);
+}
+
+.ext {
+  padding: 0.35rem 0 0.35rem 2ch;
+  border-left: 1px solid transparent;
+}
+
+.ext:hover {
+  border-left-color: var(--ghost);
+}
+
+.ext + .ext {
+  margin-top: 0.35rem;
+}
+
+.ext-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 1ch;
+}
+
+.ext-name {
+  color: var(--func);
+}
+
+.ext-ver,
+.ext-regs {
+  color: var(--faint);
+}
+
+.ext-desc {
+  color: var(--fg);
+}
+
+.ext-tag {
+  color: var(--warn);
+  border: 1px solid var(--ghost);
+  border-radius: 4px;
+  padding: 0 0.5ch;
+  font-size: 0.85em;
+}
+
+.ext-tag.built {
+  color: var(--green);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .caret {
     animation: none;
@@ -327,5 +450,15 @@ h1.comment {
   .prompt {
     padding-left: 2ch;
     text-indent: -2ch;
+  }
+}
+
+@media (max-width: 640px) {
+  .ext {
+    padding-left: 1ch;
+  }
+
+  .filter {
+    gap: 0.5rem 1rem;
   }
 }

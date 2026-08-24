@@ -6,6 +6,9 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   server: {
     port: 3000,
+    // The extensions page imports the repository's own extensions/index.json,
+    // which sits above web/ and is otherwise outside the dev server's allow list.
+    fs: { allow: ['..'] },
   },
   plugins: [
     tanstackStart({
