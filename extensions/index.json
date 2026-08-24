@@ -312,6 +312,27 @@
       ]
     },
     {
+      "id": "hearth",
+      "name": "Hearth",
+      "version": "1.0.0",
+      "description": "Hearth — a warm one-accent theme in six variants: Hearth, Azure and Teal, each light and dark. Palette from https://github.com/ryanfurrer/hearth-theme (MIT), https://hearth.ryanfurrer.com.",
+      "provides": {
+        "themes": [
+          "hearth-dark",
+          "hearth-light",
+          "hearth-dark-azure",
+          "hearth-light-azure",
+          "hearth-dark-teal",
+          "hearth-light-teal"
+        ],
+        "icons": [],
+        "filetypes": []
+      },
+      "categories": [
+        "theme"
+      ]
+    },
+    {
       "id": "html",
       "name": "HTML",
       "version": "1.0.0",
