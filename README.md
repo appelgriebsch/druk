@@ -119,6 +119,7 @@ status bar with the branch, unsaved state and cursor position.
 | `Ctrl+Opt+R` | Review panel (notes + pull-request comments) |
 | `Ctrl+Opt+A` | Note this line for a review |
 | `Ctrl+Opt+M` | Markdown: rendered / source |
+| `Ctrl+Opt+W` | Switch workspace (worktrees + recent folders) |
 
 In the tree: `a` new file, `A` new folder, `r` rename, `d` delete, `x` cut, `c` copy,
 `p` paste here, `Shift+↑`/`↓` select several rows, `[` / `]` resize the sidebar.
@@ -276,6 +277,12 @@ instead of breaking startup.
 
 druk also remembers each project's open tabs, active file and expanded folders, and
 restores them the next time you open that directory.
+
+`Ctrl+Opt+W` (or a click on the project name in the sidebar) switches to another folder
+without leaving druk: every worktree of the open repositories, then every folder druk
+has been opened on, most recent first. Palette → Workspace → Open folder… takes one by
+path, `~` included. Unsaved edits ask before the switch, and the folder you leave keeps
+its tabs for when you come back.
 
 ## Extensions
 

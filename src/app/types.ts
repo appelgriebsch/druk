@@ -2,6 +2,7 @@ import type { TextEncoding } from '../core/fs'
 import type { DiscardTarget, Remote, StashEntry } from '../core/git'
 import type { NoteKind } from '../core/review'
 import type { SearchOptions } from '../core/search'
+import type { WorkspaceEntry } from '../core/workspaces'
 import type { PackageManager } from '../lsp/install'
 import type { FetchableInstall } from '../lsp/servers'
 import type { CommitVariant } from './git'
@@ -175,6 +176,11 @@ export type Prompt =
       name: string
       servers: { id: string; name: string }[]
     }
+  | { kind: 'workspacePick'; entries: WorkspaceEntry[] }
+  /** A folder typed by hand. */
+  | { kind: 'workspaceOpen' }
+  /** The quit prompt's question: the remount drops unsaved buffers. */
+  | { kind: 'workspaceDirty'; dir: string; names: string[] }
   | null
 
 export type PromptKind = NonNullable<Prompt>['kind']

@@ -8,7 +8,7 @@ around it.
 ```
 src/
   index.tsx          entry: argument handling, then a *dynamic* import of main.tsx
-  main.tsx           load config → apply theme → render <App/>
+  main.tsx           divert runtime warnings to the log → load config → apply theme → render <Root/>
   assets.d.ts        types for `with { type: 'file' }` imports (wasm, .scm)
 build.ts             compiles a standalone binary per platform (Bun.build + Solid plugin)
 extensions/             the market: one folder per extension, served raw from main  ← extensions
@@ -23,6 +23,9 @@ scripts/
   release.ts         stages the npm package + release archives from dist/
   formula.ts         Homebrew formula for the current version's archives
   app/
+    Root.tsx         the workspace host: <App/> on the open folder, remounted on
+                     another one — every controller is built from `rootDir` once,
+                     so switching workspaces is a teardown, not a re-plumbing
     App.tsx          composition root: creates the controllers, wires them, renders layout
     commands.ts      command tree  ← the feature index (F1 palette)
     actions.ts       binds the command tree's actions to the controllers
@@ -30,6 +33,8 @@ scripts/
     Overlays.tsx     overlay state + the modal stack (search, pickers, palette, help…)
     context.ts       AppContext: every controller, typed, for the wiring that spans them
     workspace.ts     buffers + tabs: open/close/save, disk sync, session persistence
+    workspaces.ts    which folders the switcher offers, and the checks before one
+                     replaces the open workspace (Root.tsx does the replacing)
     navigation.ts    the visit history the back / forward arrows walk: one stop per
                      tab landed on, kept at the cursor position it was left at
     tree.ts          file-tree state: expansion, selection, marked ranges
@@ -80,6 +85,7 @@ scripts/
     update.ts        startup npm version check (best-effort, opt-out)
     market.ts        the extension catalog: fetch, cache, validate-then-write
     upgrade.ts       `druk update`: which install is running, and how to upgrade it
+    warnings.ts      the runtime's warnings to the log rather than over the frame (#100)
     assets.ts        pins OpenTUI's asset lookup; stages the native library (side-effect import)
   languages/
     index.ts         language registry — filled by extensions, read through functions
@@ -138,7 +144,10 @@ Dependency direction is one-way: `ui/` and feature folders never import from `ap
 `test/boundaries.test.ts` fails the suite on any such import.
 State lives in the `app/` controllers — factories (`createWorkspace`, `createTree`, …)
 that `App.tsx` calls once, in dependency order, inside the component body, so their
-signals and effects live under the app's render root. Components take props and call
+signals and effects live under the app's render root. That "once" is also what makes
+opening another folder a *remount*: `Root.tsx` keys `<App/>` on the workspace, so the
+old one's watchers, timers and language servers close through the `onCleanup` calls
+that already run on quit, and nothing has to learn how to change its `rootDir`. Components take props and call
 callbacks. Cross-cutting wiring (the keymap, the palette actions, the modal stack)
 takes the whole `AppContext` instead of a dependency list — it touches everything by
 nature, and threading twenty props would say less.

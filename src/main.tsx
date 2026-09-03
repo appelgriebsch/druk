@@ -1,9 +1,10 @@
 import { render } from '@opentui/solid'
 
-import { App } from './app/App'
+import { Root } from './app/Root'
 import { releaseAssetRoot } from './core/assets'
 import type { Target } from './core/cli'
 import { loadConfig, loadProjectConfig, readDisabledExtensions, resolveConfig } from './core/config'
+import { divertWarnings } from './core/warnings'
 import { loadExtensions } from './extensions'
 import { highlightClient } from './languages/highlight'
 import { setTheme } from './themes'
@@ -15,6 +16,9 @@ export async function main(target: Target): Promise<void> {
   // native library at a stable path; the next asset lookup after this point must
   // fall back to the bundled files instead.
   releaseAssetRoot()
+
+  // Before the renderer takes the screen: from here on stderr is the editor.
+  divertWarnings()
 
   const { rootDir, openFile } = target
 
@@ -36,13 +40,14 @@ export async function main(target: Target): Promise<void> {
 
   await render(
     () => (
-      <App
+      <Root
         rootDir={rootDir}
         openFile={openFile}
         openLine={target.line}
         openCol={target.col}
         initialConfig={config}
         initialProject={project}
+        reloadConfig={loadConfig}
       />
     ),
     {

@@ -92,6 +92,15 @@ export const KEYS: KeyInfo[] = [
     where: 'editor',
     ids: ['problems.detail'],
   },
+  {
+    key: `Ctrl+${ALT}+W`,
+    label: 'Switch workspace',
+    section: 'General',
+    // Not the peek: one more row re-deals its columns and clips every label, and
+    // it names this chord anyway through the project name's tooltip.
+    where: 'help',
+    ids: ['workspace.switch'],
+  },
   { key: 'Ctrl+Q', label: 'Quit', section: 'General', where: 'all', ids: ['quit'] },
 
   { key: 'Ctrl+S', label: 'Save file', section: 'Editing', where: 'editor', ids: ['save'] },

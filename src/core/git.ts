@@ -1489,6 +1489,32 @@ export function stashPop(cwd: string): Promise<GitResult> {
   return mutate(cwd, ['stash', 'pop'])
 }
 
+export interface Worktree {
+  path: string
+  /** null on a detached HEAD */
+  branch: string | null
+}
+
+/**
+ * Every checkout of the repository, the main one included; a bare one has no
+ * files to open. Not `localBranchName`: the porcelain writes a full ref, and
+ * `feat/x` would come back as `heads/feat/x` from it.
+ */
+export function worktrees(cwd: string): Worktree[] {
+  const run = git(cwd, ['worktree', 'list', '--porcelain'], 5000)
+  if (run.status !== 0) return []
+
+  const found: Worktree[] = []
+  for (const line of run.stdout.split('\n')) {
+    if (line.startsWith('worktree ')) found.push({ path: line.slice(9), branch: null })
+    else if (line.startsWith('branch ')) {
+      const at = found.at(-1)
+      if (at) at.branch = line.slice(7).replace(/^refs\/heads\//, '')
+    } else if (line === 'bare') found.pop()
+  }
+  return found
+}
+
 export interface StashEntry {
   /** `stash@{0}` — the name every stash command addresses one by. */
   ref: string

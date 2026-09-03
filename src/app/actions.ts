@@ -643,6 +643,8 @@ export function createCommands(ctx: AppContext) {
     lineHome: editor.requestLineHome,
     foldOp: editor.requestFoldOp,
     triggerCompletion: editor.requestCompletion,
+    switchWorkspace: ctx.workspaces.pick,
+    openWorkspace: ctx.workspaces.openPrompt,
     openSettings: () => {
       settings.setScope('user')
       // One page at a time: the slot under the settings page is the editor's.

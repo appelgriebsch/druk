@@ -6,7 +6,7 @@ import type { RGBA } from '@opentui/core'
 import { testRender } from '@opentui/solid'
 
 import { MARKET_DIR } from '../scripts/extensions'
-import { App } from '../src/app/App'
+import { Root } from '../src/app/Root'
 import { DEFAULTS } from '../src/core/config'
 import type { Config } from '../src/core/config'
 import { loadExtensions } from '../src/extensions'
@@ -68,7 +68,8 @@ export async function launch(
 ) {
   const t = await testRender(
     () =>
-      App({
+      // `Root`, not `App`: what the binary renders, so a switch is the same remount.
+      Root({
         rootDir: dir,
         openFile: options.openFile ?? null,
         openLine: options.openLine ?? null,

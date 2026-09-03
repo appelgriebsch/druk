@@ -483,7 +483,24 @@ nothing registers is offered its extension back (`extensionUpdates` turns the wh
 that off, `extensionRegistry` points it at a fork),
 file watching with conflict prompts, a save-all palette command (every unsaved tab
 through the same clash-safe path the blur autosave uses, skips and failures named),
-per-project session restore, and a startup update check.
+per-project session restore,
+switching the folder druk is open on without leaving druk (`Ctrl+Opt+W`, palette →
+Workspace → Switch workspace…, or a click on the project name in the sidebar header,
+which is the one place the open folder is named and so the one place a reader looking
+for another starts from — a filterable list of every worktree of the open
+repositories, `git worktree list` being what knows about the checkout an agent made
+an hour ago before druk has ever been opened on it, followed by every folder druk
+remembers, most recent first; the row carries the name, whether it is the one you are
+in, the branch git has checked out there and the path, in that order, since the list
+is cut from the tail at a modal's width and the path is both the longest part and the
+one worth losing. Palette → Workspace → Open folder… takes one by path, `~` included,
+for a folder neither source has heard of. Unsaved buffers stop the switch behind the
+quit prompt's question — the remount drops them and the saved session restores the
+tabs from *disk* — and the folder left behind keeps its tabs, so switching back is
+where you were. The switch itself is a remount: `Root.tsx` keys `<App/>` on the
+workspace, since every controller is built from `rootDir` once, and the extensions,
+the project settings and the theme are reloaded for the new folder ahead of it),
+and a startup update check.
 
 **Everything extensible is an extension now, and most of them live in `extensions/`.**
 An extension is one of two kinds and never both: a *language* extension (the grammar,
@@ -548,6 +565,14 @@ reads as a type error on the `Link` that points at it.
   one executable.
 - **bun manages dependencies and scripts.** Do not use npm or pnpm for installs — the
   lockfile is `bun.lock`.
+- **The runtime's warnings go to `$XDG_STATE_HOME/druk/druk.log`**, not the terminal:
+  once the renderer owns the screen, stderr *is* the editor
+  ([#100](https://github.com/letstri/druk/issues/100)). `divertWarnings`
+  (`src/core/warnings.ts`) *removes* Bun's default printer — one added beside it silences
+  nothing. The listener count that tripped it was real, not a leak: every mounted
+  component reading the terminal size or the keyboard is one `resize` and one `keypress`
+  listener on the renderer, so `Root.tsx` raises the cap and `test/listeners.test.tsx`
+  pins that closing a panel gives back what opening it took.
 - **Say `bun run <script>`, not `bun <script>`.** `build` collides with Bun's own bundler
   subcommand, so `bun build` silently bundles nothing instead of running the script. This
   now includes `test`: bare `bun test` runs the whole suite in one process, where the
@@ -734,6 +759,7 @@ dependency rule, and recipes for the extension points:
 | keybinding | a row in `BINDABLE` (`src/app/keymap.ts`) plus a handler under the same id in `src/app/keyboard.ts` — or, for an editor-only key, `src/ui/EditorPane.tsx` — advertised in `src/ui/keys.ts` (feeds the footer hints, help overlay, Ctrl+K peek and the welcome screen), with the row's `ids` naming the commands it spells out |
 | footer hint | `hint` on the key's row in `src/ui/keys.ts`, scoped to any `KeyScope` — or, for a panel letter the help table lists as one combined row, an entry in `PANEL_HINTS` there. Ranked, and the footer cuts from the tail, so a hint's rank is its survival on a narrow terminal. The status bar reads `panes.keyPane()`, so a panel's hints replace the tree's while it shows |
 | git error message | a row in `KNOWN` in `src/core/git.ts`, with the git output it matches pinned in `test/git.test.tsx` |
+| workspace-switcher entry | `workspaceEntries` in `src/core/workspaces.ts` — every path there is `resolvedPath`'d, since `git worktree list` prints the symlink-resolved spelling (`/private/var/…`) and the folder druk was opened with is the other one, and without that the workspace you are in is listed twice and marked current neither time. `src/app/workspaces.ts` is the offer and the checks; the *switch* is `Root.tsx`, which remounts `<App/>` — nothing may try to move an existing controller onto another `rootDir` |
 | terminal progress | the one status slot (`src/app/status.ts`) — a git mutation, bulk file op or install occupies it. A background operation takes it with `claimBusy`, which hands back the release and refuses to hand back anything else: an install that finds the slot taken runs without it rather than clearing a bulk delete's counter, since that would idle the bar mid-rewrite *and* reopen `whileFree` for a second op. `setBusy` is for updating a count already claimed. `reportProgress` (`src/core/progress.ts`) writes OSC 9;4 so Ghostty, WezTerm, iTerm2, kitty, Windows Terminal and recent VTE draw their own loader; an unsupported terminal is a no-op, and an exit hook puts the indicator out where `onCleanup` never runs |
 | market extension | a folder under `extensions/` holding `extension.json`, then `bun run extensions` to regenerate `extensions/index.json` — `test/extensions-repo.test.ts` fails when the committed index is stale, and bumping the manifest `version` is what makes installed copies see an update |
 | row in the extensions panel | `src/app/extensionsPanel.ts` (the cursor, the fold state and what Enter does); `src/ui/ExtensionsPanel.tsx` owns the `ExtensionRow` type, draws whatever `rows()` returns and reports clicks, and the keys live in `src/app/keyboard.ts` beside the tree's and the git panel's. Row/view-model types live in the ui component and the controller imports them — the `SettingRow` arrangement, enforced by `test/boundaries.test.ts` |

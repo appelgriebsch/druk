@@ -34,6 +34,7 @@ import type { Status } from './status'
 import type { Tree } from './tree'
 import type { Confirmation, Prompt, PromptKind } from './types'
 import type { Workspace } from './workspace'
+import type { Workspaces } from './workspaces'
 
 /**
  * Prompts answered with text, and the title their input box carries. Having a
@@ -54,6 +55,7 @@ const PROMPT_TITLES: Partial<Record<PromptKind, string>> = {
   renameBranch: 'Rename branch to',
   reviewNote: 'Review note',
   reviewReply: 'Reply',
+  workspaceOpen: 'Open folder',
 }
 
 /**
@@ -84,9 +86,10 @@ export function createPromptHandlers(deps: {
   lsp: Lsp
   market: Market
   review: Review
+  workspaces: Workspaces
 }) {
   const { renderer, state, status, tree, panes, editor, workspace } = deps
-  const { fileOps, git, gitOp, commitView, branches, lsp, market, review } = deps
+  const { fileOps, git, gitOp, commitView, branches, lsp, market, review, workspaces } = deps
   const { prompt, setPrompt } = state
   const { say } = status
 
@@ -160,6 +163,8 @@ export function createPromptHandlers(deps: {
         repo: p.repo,
         done: () => `Added remote ${p.name}`,
       })
+    } else if (p.kind === 'workspaceOpen') {
+      workspaces.switchTo(name)
     } else if (p.kind === 'newBranch') {
       branches.create(name, p.from)
     } else if (p.kind === 'renameBranch') {
@@ -244,6 +249,13 @@ export function createPromptHandlers(deps: {
     commitView.open(p.repo, oid)
   }
 
+  const chooseWorkspace = (dir: string) => {
+    const p = prompt()
+    setPrompt(null)
+    if (p?.kind !== 'workspacePick') return
+    if (p.entries.some(entry => entry.path === dir)) workspaces.switchTo(dir)
+  }
+
   /** The kind chosen: the same prompt again, now asking for the words. */
   const chooseReviewKind = (kind: string) => {
     const p = prompt()
@@ -297,6 +309,8 @@ export function createPromptHandlers(deps: {
       }
       case 'quitDirty':
         return quit(true)
+      case 'workspaceDirty':
+        return workspaces.switchTo(p.dir, true)
       case 'undoCommit':
         return gitOp('Undoing commit', repo => undoLastCommit(repo), {
           done: () => `Undid "${p.subject}" — its changes are staged`,
@@ -463,6 +477,13 @@ export function createPromptHandlers(deps: {
           danger: true,
           message: `Unsaved edits in ${p.names.join(', ')} will be lost. Quit anyway?`,
         }
+      case 'workspaceDirty':
+        return {
+          title: 'Unsaved changes',
+          verb: 'switch without saving',
+          danger: true,
+          message: `Unsaved edits in ${p.names.join(', ')} will be lost. Open ${basename(p.dir)} anyway?`,
+        }
       case 'replaceProject':
         return {
           title: 'Replace in project',
@@ -594,6 +615,7 @@ export function createPromptHandlers(deps: {
     chooseTagDelete,
     chooseRemoteRemove,
     chooseHistoryCommit,
+    chooseWorkspace,
     cancelPrompt,
     promptTitle,
     promptValue,

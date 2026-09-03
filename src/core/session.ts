@@ -14,8 +14,8 @@ import { exists } from './fs'
 
 const SESSIONS_FILE = join(dirname(CONFIG_FILE), 'sessions.json')
 
-/** Projects remembered before the oldest entries are dropped. */
-const MAX_PROJECTS = 20
+/** Projects remembered before the oldest are dropped — also the switcher's list. */
+const MAX_PROJECTS = 50
 
 export interface Session {
   tabs: string[]
@@ -57,6 +57,14 @@ export function loadSession(rootDir: string): Session {
     expanded: strings(entry.expanded).filter(path => exists(path)),
     sidebar: entry.sidebar !== false,
   }
+}
+
+/** Folders druk has been opened on, most recent first; deleted ones dropped. */
+export function recentProjects(): { path: string; touchedAt: number }[] {
+  return Object.entries(readAll())
+    .filter(([path]) => exists(path))
+    .map(([path, entry]) => ({ path, touchedAt: entry.touchedAt ?? 0 }))
+    .toSorted((a, b) => b.touchedAt - a.touchedAt)
 }
 
 export function saveSession(rootDir: string, session: Session, now = Date.now()): void {

@@ -110,7 +110,9 @@ test('palette discard refuses comparison mode', async () => {
 
 test('a stale confirmation changes neither the dirty buffer nor disk', async () => {
   const dir = repo()
-  const t = await launch(dir)
+  // Off, or leaving the editor for the panel writes the buffer and the checkout
+  // below is then a plain reload of a clean one — not the case being pinned.
+  const t = await launch(dir, { autoSaveOnBlur: false })
   await openFile(t, 'a.ts')
   await press(t, input => void input.typeText('unsaved '))
   await runCommand(t, 'Source control')

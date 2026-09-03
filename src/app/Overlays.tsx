@@ -7,6 +7,7 @@ import type { Branch } from '../core/git'
 import { buildQuery, planProjectReplace, replaceAll, replaceMatch } from '../core/search'
 import type { Match, SearchOptions } from '../core/search'
 import type { UpdateInfo } from '../core/update'
+import { shortenHome } from '../core/workspaces'
 import { SEVERITY_RANK } from '../lsp/protocol'
 import { BranchPicker } from '../ui/BranchPicker'
 import { ChoiceModal } from '../ui/ChoiceModal'
@@ -47,6 +48,7 @@ type StashActionPrompt = Extract<Prompt, { kind: 'stashAction' }>
 type TagDeletePrompt = Extract<Prompt, { kind: 'tagDelete' }>
 type RemoteRemovePrompt = Extract<Prompt, { kind: 'remoteRemove' }>
 type FileHistoryPrompt = Extract<Prompt, { kind: 'fileHistory' }>
+type WorkspacePickPrompt = Extract<Prompt, { kind: 'workspacePick' }>
 
 /** What the problems modal is showing: every open file's, or the cursor's line. */
 export type ProblemsScope = 'all' | 'cursor'
@@ -257,6 +259,7 @@ export function OverlayStack(props: { ctx: AppContext; commands: Accessor<Comman
   const tagDelete = promptOf('tagDelete')
   const remoteRemove = promptOf('remoteRemove')
   const fileHistory = promptOf('fileHistory')
+  const workspacePick = promptOf('workspacePick')
   const conflictSide = promptOf('mergeConflict')
 
   return (
@@ -374,6 +377,29 @@ export function OverlayStack(props: { ctx: AppContext; commands: Accessor<Comman
               label: `${remote.name}  ${remote.url}`,
             }))}
             onPick={prompts.chooseRemoteRemove}
+            onClose={prompts.cancelPrompt}
+          />
+        )}
+      </Show>
+      <Show when={workspacePick()}>
+        {(ask: () => WorkspacePickPrompt) => (
+          <ListPicker
+            title="Switch workspace"
+            placeholder="Type part of a folder name or path…"
+            items={ask().entries.map(entry => ({
+              id: entry.path,
+              // Path last: the row is cut from the tail, and the path is both
+              // the longest part and the one worth losing.
+              label: [
+                entry.name,
+                entry.current ? '· current' : '',
+                entry.branch ? `⎇ ${entry.branch}` : '',
+                shortenHome(entry.path),
+              ]
+                .filter(Boolean)
+                .join('  '),
+            }))}
+            onPick={prompts.chooseWorkspace}
             onClose={prompts.cancelPrompt}
           />
         )}

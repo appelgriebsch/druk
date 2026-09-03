@@ -17,6 +17,7 @@ import type { Settings } from './settings'
 import type { Status } from './status'
 import type { Tree } from './tree'
 import type { Workspace } from './workspace'
+import type { Workspaces } from './workspaces'
 
 /** Every controller, assembled once in App and handed to the wiring that spans them. */
 export interface AppContext {
@@ -39,6 +40,7 @@ export interface AppContext {
   commitView: CommitView
   comparison: Comparison
   workspace: Workspace
+  workspaces: Workspaces
   navigation: Navigation
   fileOps: FileOps
   prompts: PromptState & PromptHandlers

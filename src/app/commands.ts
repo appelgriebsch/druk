@@ -74,6 +74,8 @@ export interface CommandActions {
   lineHome: () => void
   foldOp: (op: FoldOp) => void
   triggerCompletion: () => void
+  switchWorkspace: () => void
+  openWorkspace: () => void
   openSettings: () => void
   openProjectSettings: () => void
   problemsList: () => void
@@ -646,6 +648,19 @@ export function buildCommands(actions: CommandActions, ctx: CommandContext): Com
     // Vim, tab size, trim, auto-save and the rest live on the settings page —
     // the palette carries features, not configuration. Themes stay above for
     // the arrow-through live preview.
+    {
+      id: 'workspace',
+      label: 'Workspace',
+      children: [
+        {
+          id: 'workspace.switch',
+          label: 'Switch workspace…',
+          hint: `Ctrl+${ALT}+W`,
+          run: actions.switchWorkspace,
+        },
+        { id: 'workspace.open', label: 'Open folder…', run: actions.openWorkspace },
+      ],
+    },
     { id: 'settings', label: 'Settings', run: actions.openSettings },
     // The same page on its other file — the one that stays with the project.
     {

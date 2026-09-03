@@ -65,6 +65,7 @@ import { createSettings } from './settings'
 import { createStatus, READY } from './status'
 import { createTree, hiddenNodes } from './tree'
 import { CLASH_CHANGED, CLASH_DELETED, createWorkspace, restoreWorkspace } from './workspace'
+import { createWorkspaces } from './workspaces'
 
 /** The divider draws its own left edge; a box border is how it spans the height.
     One side only, and the grip is one column wide, so the border lands on that
@@ -102,6 +103,10 @@ export function App(props: {
    * hundreds of launches off the npm registry and off the market.
    */
   checkUpdates?: boolean
+  /** `Root`'s remount; absent where nothing can switch (a test rendering `App`). */
+  onOpenWorkspace?: (dir: string) => void
+  /** The status bar's first line — how a switch reports itself. */
+  notice?: string | null
 }) {
   const renderer = useRenderer()
   const dimensions = useTerminalDimensions()
@@ -111,6 +116,8 @@ export function App(props: {
   const restored = restoreWorkspace(rootDir, single)
 
   const status = createStatus()
+  // First, so a restore's warning is the later, louder message.
+  if (props.notice) status.say(props.notice)
   const project = props.initialProject ?? loadProjectConfig(rootDir)
   const initial = resolveConfig(props.initialConfig, project)
   const editor = createEditorBridge(initial.vim)
@@ -173,6 +180,14 @@ export function App(props: {
     lsp,
     prompts: promptState,
   })
+  const workspaces = createWorkspaces({
+    rootDir,
+    status,
+    git,
+    workspace,
+    setPrompt: promptState.setPrompt,
+    open: props.onOpenWorkspace,
+  })
   const navigation = createNavigation({ workspace, editor, panes, status })
   const fileOps = createFileOps({ rootDir, status, tree, workspace, renderer })
   const gitOp = createGitOp({ git, status, workspace })
@@ -195,6 +210,7 @@ export function App(props: {
     lsp,
     market,
     review,
+    workspaces,
   })
   const overlays = createOverlays({
     renderer,
@@ -252,6 +268,7 @@ export function App(props: {
     commitView,
     comparison,
     workspace,
+    workspaces,
     navigation,
     fileOps,
     prompts: { ...promptState, ...promptHandlers },
@@ -674,6 +691,7 @@ export function App(props: {
                 onPin={node => workspace.pinTab(node.path)}
                 onFocus={() => panes.setFocus('tree')}
                 onCollapseAll={tree.collapseAll}
+                onSwitchWorkspace={workspaces.pick}
               />
             </Show>
             <Show when={panes.view() === 'git'}>

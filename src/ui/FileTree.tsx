@@ -31,6 +31,8 @@ export interface FileTreeProps {
   onFocus: () => void
   /** The header's ▴: shut every folder at once. */
   onCollapseAll: () => void
+  /** The project name is a button. */
+  onSwitchWorkspace: () => void
 }
 
 const DOUBLE_CLICK_MS = 400
@@ -83,6 +85,7 @@ export function FileTree(props: FileTreeProps) {
   const list = createScrollList(() => props.nodes.length)
   const visible = createMemo(() => props.nodes.slice(list.window().start, list.window().end))
   const collapse = useTooltip('view.collapse')
+  const project = useTooltip('workspace.switch')
   const rowHover = useHoverKey<string>()
 
   /**
@@ -151,13 +154,23 @@ export function FileTree(props: FileTreeProps) {
         paddingLeft={2}
         paddingRight={1}
       >
-        <text
-          fg={props.focused ? ui.text : ui.dim}
-          bg={ui.sidebarBg}
+        <box
+          ref={project.ref}
           flexShrink={1}
-          content={props.rootName}
-          attributes={TextAttributes.BOLD}
-        />
+          backgroundColor={project.lit() ? ui.hoverBg : ui.sidebarBg}
+          onMouseDown={props.onSwitchWorkspace}
+          onMouseOver={project.enter}
+          onMouseOut={project.leave}
+        >
+          <text
+            fg={props.focused || project.lit() ? ui.text : ui.dim}
+            bg={project.lit() ? ui.hoverBg : ui.sidebarBg}
+            flexShrink={1}
+            wrapMode="none"
+            content={props.rootName}
+            attributes={TextAttributes.BOLD}
+          />
+        </box>
         <box flexGrow={1} backgroundColor={ui.sidebarBg} />
         {/* The same arrowhead a row's own folder wears, pointing the way it
             folds — and gone when there is nothing open to fold. */}
@@ -177,7 +190,7 @@ export function FileTree(props: FileTreeProps) {
             />
           </box>
         </Show>
-        <text fg={ui.faint} bg={ui.sidebarBg} flexShrink={0} content="explorer" />
+        <text fg={ui.faint} bg={ui.sidebarBg} flexShrink={0} content=" explorer" />
       </box>
       <scrollbox
         ref={list.ref}
