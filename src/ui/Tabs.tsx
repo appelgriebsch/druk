@@ -1,6 +1,5 @@
 import { TextAttributes } from '@opentui/core'
 import type { MouseEvent } from '@opentui/core'
-import { useTerminalDimensions } from '@opentui/solid'
 import { createMemo, For, Show } from 'solid-js'
 
 import { ui } from '../themes'
@@ -26,6 +25,8 @@ export interface TabInfo {
 
 export interface TabsProps {
   tabs: TabInfo[]
+  /** Columns the strip has — the editor's column, not the terminal's width. */
+  width: number
   /** `id` of the tab on screen. */
   activeId: string | null
   /** Whether the visit history has anywhere to go, each way. */
@@ -77,7 +78,6 @@ const glyphOf = (tab: TabInfo): { glyph: string; color?: string } | null =>
     : tab.icon
 
 export function Tabs(props: TabsProps) {
-  const dimensions = useTerminalDimensions()
   const back = useTooltip('nav.back')
   const forward = useTooltip('nav.forward')
   const before = useTooltip('tabs.switch')
@@ -89,11 +89,10 @@ export function Tabs(props: TabsProps) {
    * view. Letting flexbox shrink them instead clips names mid-character.
    */
   const visible = createMemo(() => {
-    // The bar spans the terminal: the tree sits below it, not beside it. Taking
-    // the sidebar's width off the budget made tabs reflow on every resize. The
-    // arrows are drawn whether or not they are live, so their columns are gone
-    // from the budget either way.
-    const budget = dimensions().width - NAV - (props.markdown ? PREVIEW_WIDTH : 0)
+    // The strip sits over the editor alone, as VS Code's does, so its budget is
+    // that column's width — not the terminal's. The arrows are drawn whether or
+    // not they are live, so their columns are gone from the budget either way.
+    const budget = props.width - NAV - (props.markdown ? PREVIEW_WIDTH : 0)
     const width = (tab: TabInfo) =>
       shorten(tab.name).length + CHROME + (tab.severity || tab.icon ? SLOT : 0)
 
@@ -211,13 +210,10 @@ export function Tabs(props: TabsProps) {
                     }
                     bg={bg()}
                     content={shorten(tab.name)}
-                    attributes={
-                      tab.preview
-                        ? TextAttributes.ITALIC
-                        : active()
-                          ? TextAttributes.BOLD
-                          : undefined
-                    }
+                    // Preview tabs italic, as VS Code draws them; nothing bold —
+                    // the active tab is said by its fill and its accent edge, and
+                    // a bold label on top of both is a third way of saying it.
+                    attributes={tab.preview ? TextAttributes.ITALIC : undefined}
                   />
                   <box
                     paddingLeft={1}

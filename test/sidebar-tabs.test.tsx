@@ -6,8 +6,8 @@ import { ui } from '../src/themes'
 import { fixture, launch, settle } from './helpers'
 import type { Harness } from './helpers'
 
-/** The strip is the sidebar's own row, under the tab bar that spans the terminal. */
-const TABS_ROW = 1
+/** The strip is the sidebar’s first row: the tab bar sits over the editor. */
+const TABS_ROW = 0
 const FILES_X = 3
 const GIT_X = 9
 
@@ -47,17 +47,17 @@ const frame = (t: Harness) => t.captureCharFrame()
 
 test('the tab strip switches the sidebar between its two views', async () => {
   const t = await launch(repo())
-  expect(frame(t)).toContain('explorer')
+  expect(frame(t)).toContain('EXPLORER')
 
   await t.mockMouse.click(GIT_X, TABS_ROW)
   await settle(t)
   const panel = frame(t)
   expect(panel).toContain('▾ Changes')
-  expect(panel).not.toContain('explorer')
+  expect(panel).not.toContain('EXPLORER')
 
   await t.mockMouse.click(FILES_X, TABS_ROW)
   await settle(t)
-  expect(frame(t)).toContain('explorer')
+  expect(frame(t)).toContain('EXPLORER')
 })
 
 test('the view on screen is the filled button, and the fill follows the click', async () => {

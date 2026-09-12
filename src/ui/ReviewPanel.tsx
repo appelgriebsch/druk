@@ -5,6 +5,7 @@ import type { ReviewNote } from '../core/review'
 import { ui } from '../themes'
 import { useHover, useHoverKey } from './hover'
 import { createScrollList, rowBg, scrollbarOptions } from './list'
+import { PanelHeader } from './PanelHeader'
 import { cut } from './text'
 
 export type ReviewRow =
@@ -73,41 +74,32 @@ export function ReviewPanel(props: ReviewPanelProps) {
       flexBasis={0}
       onMouseDown={() => props.onFocus()}
     >
-      {/* One row, as the tree's header and the git panel's are, and cut like
-          them: a wrapped header eats the list below it. */}
-      <box
-        height={1}
-        flexDirection="row"
-        backgroundColor={ui.sidebarBg}
-        paddingLeft={2}
-        paddingRight={1}
-      >
-        <text
-          fg={props.focused ? ui.text : ui.dim}
-          bg={ui.sidebarBg}
-          flexShrink={1}
-          wrapMode="none"
-          content={cut(
-            `${props.count} item${props.count === 1 ? '' : 's'}`,
-            Math.max(4, props.width - 12),
-          )}
-          attributes={TextAttributes.BOLD}
-        />
-        <box flexGrow={1} backgroundColor={ui.sidebarBg} />
+      {/* VS Code's title row; the count rides on its right, where the git
+          panel's branch does. */}
+      <PanelHeader title="Review" width={props.width} focused={props.focused}>
         <Show when={props.rows.some(row => row.kind === 'file' && !row.collapsed)}>
           <text
             fg={collapse.hovered() ? ui.text : ui.dim}
             bg={collapse.hovered() ? ui.hoverBg : ui.sidebarBg}
             flexShrink={0}
             wrapMode="none"
-            content="▴"
+            content="▴ "
             onMouseDown={() => props.onCollapseAll()}
             onMouseOver={collapse.enter}
             onMouseOut={collapse.leave}
           />
         </Show>
-        <text fg={ui.faint} bg={ui.sidebarBg} flexShrink={0} wrapMode="none" content=" review" />
-      </box>
+        <text
+          fg={props.focused ? ui.text : ui.dim}
+          bg={ui.sidebarBg}
+          flexShrink={0}
+          wrapMode="none"
+          content={cut(
+            `${props.count} item${props.count === 1 ? '' : 's'}`,
+            Math.max(4, props.width - 12),
+          )}
+        />
+      </PanelHeader>
 
       <scrollbox
         ref={list.ref}

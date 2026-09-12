@@ -16,7 +16,7 @@ const track = (t: Harness) =>
 
 /** First line number in the gutter, i.e. where the viewport sits. */
 function topLine(t: Harness): number {
-  const row = t.captureCharFrame().split('\n')[1]!
+  const row = t.captureCharFrame().split('\n')[2]!
   return Number(row.trim().split(/\s+/)[0])
 }
 
@@ -33,7 +33,7 @@ async function openAlone(name: string, content: string) {
 }
 
 /** The track's screen column: the last cell of an editor row. */
-const trackX = (t: Harness) => t.captureCharFrame().split('\n')[1]!.length - 1
+const trackX = (t: Harness) => t.captureCharFrame().split('\n')[2]!.length - 1
 
 describe('dragging the editor scrollbar', () => {
   test('pressing down the track scrolls the file there', async () => {
@@ -56,7 +56,7 @@ describe('dragging the editor scrollbar', () => {
     const deep = topLine(t)
     expect(deep).toBeGreaterThan(100)
 
-    await t.mockMouse.drag(x, 16, x, 1)
+    await t.mockMouse.drag(x, 16, x, 2)
     await settle(t)
     expect(topLine(t)).toBe(1)
   })

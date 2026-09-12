@@ -110,10 +110,12 @@ describe('PDF viewer', () => {
 
     await press(t, input => void input.pressKeys([F1]))
     await press(t, input => input.pressKey('+'))
-    expect(t.captureCharFrame()).toContain('sample.pdf — 1/2 · 100%')
+    // Asserted once the palette is gone: it covers the viewer's own header.
     await pressEscape(t)
     await pressEscape(t)
-    expect(t.captureCharFrame()).not.toContain('125%')
+    const frame = t.captureCharFrame()
+    expect(frame).toContain('sample.pdf — 1/2 · 100%')
+    expect(frame).not.toContain('125%')
   })
 
   test('a page over the PDF owns its arrow keys', async () => {

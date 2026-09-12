@@ -393,8 +393,9 @@ test('icons take the arrow column in the tree', async () => {
   const frame = t.captureCharFrame()
   expect(frame).toContain('◆ a.ts')
   expect(frame).toContain('¶ notes.md')
-  // The row is no wider than it was: the glyph replaced the arrow.
-  expect(frame).not.toContain('· a.ts')
+  // The row is no wider than it was: the glyph took the arrow's column, so the
+  // name is where it sits with no icon theme at all.
+  expect(frame).not.toContain('   a.ts')
 })
 
 test('an extension icon theme is a value of the setting', async () => {
@@ -508,7 +509,7 @@ test("the panel is the sidebar's third view, beside files and git", async () => 
   await runCommand(t, 'Extensions panel')
   await settle(t)
   const panel = t.captureCharFrame()
-  expect(panel).toContain('extensions')
+  expect(panel).toContain('EXTENSIONS')
   expect(panel).toContain('INSTALLED')
 })
 

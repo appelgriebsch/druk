@@ -29,7 +29,7 @@ describe('druk <file>', () => {
     expect(t.captureCharFrame()).toContain('const two = 2')
     expect(tabBar(t)).toContain('two.ts')
     // No tree: no header, no explorer label, no row for the sibling file.
-    expect(t.captureCharFrame()).not.toContain('explorer')
+    expect(t.captureCharFrame()).not.toContain('EXPLORER')
     expect(t.captureCharFrame()).not.toContain('one.ts')
   })
 
@@ -46,7 +46,7 @@ describe('druk <file>', () => {
     const t = await openOne(join(dir, 'two.ts'))
     expect(tabBar(t)).toContain('two.ts')
     expect(tabBar(t)).not.toContain('one.ts')
-    expect(t.captureCharFrame()).not.toContain('explorer')
+    expect(t.captureCharFrame()).not.toContain('EXPLORER')
   })
 
   test('and it does not write that layout back over the folder’s own', async () => {
@@ -81,12 +81,12 @@ describe('druk <file>', () => {
   test('Ctrl+B still brings the tree in when you want it', async () => {
     const dir = fixture(PROJECT)
     const t = await openOne(join(dir, 'two.ts'))
-    expect(t.captureCharFrame()).not.toContain('explorer')
+    expect(t.captureCharFrame()).not.toContain('EXPLORER')
 
     await press(t, input => input.pressKey('b', { ctrl: true }))
     await settle(t)
     const frame = t.captureCharFrame()
-    expect(frame).toContain('explorer')
+    expect(frame).toContain('EXPLORER')
     // The folder holding the file is the project, so its siblings are there.
     expect(frame).toContain('one.ts')
   })

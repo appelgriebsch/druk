@@ -5,12 +5,13 @@ import type { Harness } from './helpers'
 
 const long = `${Array.from({ length: 200 }, (_, index) => `line ${index}`).join('\n')}\n`
 
-/** Rightmost column of the editor rows: the scrollbar track. */
+/** Rightmost column of the editor rows: the scrollbar track. The editor starts
+ * at row 2 — the tab strip is row 0 and the breadcrumbs row 1. */
 const track = (t: Harness) =>
   t
     .captureCharFrame()
     .split('\n')
-    .slice(1, 19)
+    .slice(2, 19)
     .map(row => row.at(-1))
     .join('')
 

@@ -65,11 +65,14 @@ test('the arrows on the tab strip do the same', async () => {
   await openFile(t, 'a.ts')
   await openFile(t, 'b.ts')
 
-  await t.mockMouse.click(1, 0)
+  // The strip sits over the editor's column, so the arrows start where the
+  // sidebar ends rather than at column 0.
+  const back = t.captureCharFrame().split('\n')[0]!.indexOf('←')
+  await t.mockMouse.click(back, 0)
   await settle(t)
   expect(t.captureCharFrame()).toContain('const one = 1')
 
-  await t.mockMouse.click(3, 0)
+  await t.mockMouse.click(back + 2, 0)
   await settle(t)
   expect(t.captureCharFrame()).toContain('const b = 2')
 })

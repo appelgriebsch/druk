@@ -13,10 +13,11 @@ async function withOpenFile() {
 
 /** Drag across `word` on the editor's first row. */
 async function selectOnFirstRow(t: Harness, word: string) {
-  // Found from the frame: the editor's first column moves with the sidebar width.
-  const row = t.captureCharFrame().split('\n')[1]!
+  // Found from the frame: the editor's first column moves with the sidebar
+  // width. Row 2 — the tab strip is row 0 and the breadcrumbs row 1.
+  const row = t.captureCharFrame().split('\n')[2]!
   const from = row.indexOf(word)
-  await t.mockMouse.drag(from, 1, from + word.length, 1)
+  await t.mockMouse.drag(from, 2, from + word.length, 2)
   await settle(t)
 }
 

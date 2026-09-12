@@ -18,14 +18,14 @@ const frame = (t: Harness) => t.captureCharFrame()
 
 test('a custom chord runs the command, and the key it replaced does not', async () => {
   const t = await launch(fixture(PROJECT), { keybindings: { 'view.sidebar': `Ctrl+${ALT}+B` } })
-  expect(frame(t)).toContain('explorer')
+  expect(frame(t)).toContain('EXPLORER')
 
   await press(t, i => void i.pressKeys([ctrlOpt('b')]))
-  expect(frame(t)).not.toContain('explorer')
+  expect(frame(t)).not.toContain('EXPLORER')
 
   // A rebind moves the shortcut rather than adding one, so Ctrl+B is dead now.
   await press(t, i => i.pressKey('b', { ctrl: true }))
-  expect(frame(t)).not.toContain('explorer')
+  expect(frame(t)).not.toContain('EXPLORER')
 })
 
 test('a command with no default key can be given one', async () => {

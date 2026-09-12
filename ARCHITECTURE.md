@@ -128,7 +128,7 @@ scripts/
     typing.ts        auto-closing pairs and indentation on Enter
   ui/                presentational components, no app state
     EditorPane, FileTree, GitPanel, ComparePanel, ComparisonView, CompareFilter,
-    SidebarTabs, Tabs, StatusBar, CommandPalette, FilePicker,
+    SidebarTabs, Tabs, Breadcrumbs, PanelHeader, StatusBar, CommandPalette, FilePicker,
     SearchPanel, DiffView, ChangesView, ImageView, PdfView, PreviewPane, ReviewPanel, SettingsView,
     SettingEditor,
     SettingPicker, ExtensionsPanel, LspStatusView, UpdateBanner,

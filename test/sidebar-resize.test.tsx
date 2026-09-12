@@ -242,7 +242,7 @@ describe('sidebar on the right', () => {
 })
 
 describe('what must not move when the sidebar does', () => {
-  test('the tab bar is unaffected — it spans the terminal, above the tree', async () => {
+  test('the tab bar stays inside the editor column, whatever the sidebar takes', async () => {
     const files: Record<string, string> = {}
     for (let i = 0; i < 8; i++) files[`file-number-${i}.ts`] = `const a${i} = 1\n`
     const t = await launch(fixture(files))
@@ -250,15 +250,21 @@ describe('what must not move when the sidebar does', () => {
       await openFile(t, `file-number-${i}.ts`)
     }
     await settle(t)
-    const before = t.captureCharFrame().split('\n')[0]
 
+    /** Where the strip's first button — the history's ← — is drawn. */
+    const stripStart = (t: Harness) => t.captureCharFrame().split('\n')[0]!.indexOf('←')
+
+    // The strip is the editor's own, as VS Code's is, so it begins after the
+    // divider and gives way as the sidebar takes columns — never over the tree.
     await t.mockMouse.drag(dividerAt(t), 5, 50, 5)
     await settle(t)
-    expect(t.captureCharFrame().split('\n')[0]).toBe(before)
+    expect(stripStart(t)).toBeGreaterThan(dividerAt(t))
 
     await t.mockMouse.drag(dividerAt(t), 5, 20, 5)
     await settle(t)
-    expect(t.captureCharFrame().split('\n')[0]).toBe(before)
+    expect(stripStart(t)).toBeGreaterThan(dividerAt(t))
+    // Narrower sidebar, more room for tabs: the active one is still drawn.
+    expect(t.captureCharFrame().split('\n')[0]).toContain('file-number-4.ts')
   })
 
   test('git marks line up at the panel edge, and follow it on a resize', async () => {
@@ -311,23 +317,31 @@ describe('rows hold their shape when names overflow', () => {
     'tests/deeply-long-filename-here.ts': 'x\n',
   }
 
-  const bulletColumns = (t: Harness) =>
+  /**
+   * Column each file row's name starts at. A file row is an indent and then a
+   * lower-case letter: the folder rows lead with their arrowhead, and the
+   * chrome rows around the tree (the strip, `EXPLORER`, the project, the status
+   * bar) all lead with a capital. Sixteen columns because the narrowest sidebar
+   * these tests set is eighteen.
+   */
+  const nameColumns = (t: Harness) =>
     t
       .captureCharFrame()
       .split('\n')
-      .map(row => row.indexOf('·'))
-      .filter(at => at >= 0)
+      .map(row => row.slice(0, 16))
+      .filter(row => /^\s+[a-z]/.test(row))
+      .map(row => row.search(/\S/))
 
-  test('the bullet sits at one column whatever the names do', async () => {
+  test('a name starts at one column whatever the names do', async () => {
     // Narrow enough that the long names cannot fit.
     const t = await launch(fixture(NAMES), { sidebarWidth: 22 })
     await press(t, input => input.pressArrow('down'))
     await press(t, input => input.pressEnter())
     await settle(t)
 
-    // Every file row is at the same depth, so every bullet shares a column. A
-    // long name used to squeeze the indent guide and pull its bullet left.
-    expect(new Set(bulletColumns(t)).size).toBe(1)
+    // Every file row is at the same depth, so every name shares a column. A
+    // long name used to squeeze the indent and pull its row's glyphs left.
+    expect(new Set(nameColumns(t)).size).toBe(1)
   })
 
   test('and keeps that column across a resize', async () => {
@@ -335,15 +349,15 @@ describe('rows hold their shape when names overflow', () => {
     await press(t, input => input.pressArrow('down'))
     await press(t, input => input.pressEnter())
     await settle(t)
-    const before = bulletColumns(t)
+    const before = nameColumns(t)
 
     await t.mockMouse.drag(dividerAt(t), 5, 40, 5)
     await settle(t)
-    expect(bulletColumns(t)).toEqual(before)
+    expect(nameColumns(t)).toEqual(before)
 
     await t.mockMouse.drag(dividerAt(t), 5, 18, 5)
     await settle(t)
-    expect(bulletColumns(t)).toEqual(before)
+    expect(nameColumns(t)).toEqual(before)
   })
 })
 

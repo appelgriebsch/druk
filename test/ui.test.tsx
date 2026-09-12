@@ -31,7 +31,7 @@ describe('editor', () => {
   test('shows the tree on start', async () => {
     const t = await launch(fixture(PROJECT))
     const frame = t.captureCharFrame()
-    expect(frame).toContain('explorer')
+    expect(frame).toContain('EXPLORER')
     expect(frame).toContain('src')
     expect(frame).toContain('notes.md')
   })

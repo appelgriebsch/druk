@@ -76,15 +76,15 @@ describe('wrapText', () => {
 describe('an open modal', () => {
   test('dims what is behind it without hiding it', async () => {
     const t = await launch(fixture(PROJECT), {}, { width: 100, height: 30 })
-    const before = fgOf(t, 'explorer')
+    const before = fgOf(t, 'EXPLORER')
     expect(before).not.toBe('')
 
     await openPalette(t)
     await settle(t)
-    const behind = fgOf(t, 'explorer')
+    const behind = fgOf(t, 'EXPLORER')
 
     // Still on screen — the scrim composites rather than painting over.
-    expect(t.captureCharFrame()).toContain('explorer')
+    expect(t.captureCharFrame()).toContain('EXPLORER')
     // …and visibly darker than it was.
     expect(behind).not.toBe(before)
     expect(Number.parseInt(behind, 16)).toBeLessThan(Number.parseInt(before, 16))

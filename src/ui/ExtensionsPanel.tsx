@@ -5,6 +5,7 @@ import type { ExtensionCategory } from '../extensions'
 import { ui } from '../themes'
 import { useHover, useHoverKey } from './hover'
 import { createScrollList, rowBg, scrollbarOptions } from './list'
+import { PanelHeader } from './PanelHeader'
 import { TextInput } from './TextInput'
 
 export type ExtensionRow =
@@ -108,24 +109,16 @@ export function ExtensionsPanel(props: ExtensionsPanelProps) {
       flexBasis={0}
       onMouseDown={() => props.onFocus()}
     >
-      {/* One row, as the tree's header and the git panel's are. */}
-      <box
-        height={1}
-        flexDirection="row"
-        backgroundColor={ui.sidebarBg}
-        paddingLeft={2}
-        paddingRight={1}
-      >
+      {/* VS Code's title row; what is installed is counted on its right. */}
+      <PanelHeader title="Extensions" width={props.width} focused={props.focused}>
         <text
           fg={props.focused ? ui.text : ui.dim}
           bg={ui.sidebarBg}
-          flexShrink={1}
+          flexShrink={0}
+          wrapMode="none"
           content={`${props.installedCount} installed`}
-          attributes={TextAttributes.BOLD}
         />
-        <box flexGrow={1} backgroundColor={ui.sidebarBg} />
-        <text fg={ui.faint} bg={ui.sidebarBg} flexShrink={0} content="extensions" />
-      </box>
+      </PanelHeader>
 
       {/* The panel's own search, and the only one it has: this view is about
           extensions and nothing else, so one field covers what is installed and

@@ -19,11 +19,33 @@ const BRANCH =
   '49-tanstack-start-setupmiddleware-callback-imports-are-not-pruned-from-the-client-bundle'
 
 /** Frame rows carrying `needle` — the count is what wrapping used to inflate. */
-const rowsWith = (t: Harness, needle: string) =>
+/** Columns the sidebar has at these terminal widths, its divider included. */
+const SIDEBAR = 34
+
+/** Under the tab strip, over the editor — and only while a file is open. */
+const BREADCRUMBS_ROW = 1
+
+/**
+ * Rows carrying `needle`.
+ *
+ * Two things in the frame repeat what a panel row says, and each has to be
+ * excluded where it would be counted: the breadcrumbs name the open file's own
+ * path (`skipBreadcrumbs`), and the review's card repeats the remark beside the
+ * sidebar (`within`, the sidebar's own columns).
+ */
+const rowsWith = (
+  t: Harness,
+  needle: string,
+  options: { skipBreadcrumbs?: boolean; within?: number } = {},
+) =>
   t
     .captureCharFrame()
     .split('\n')
-    .filter(row => row.includes(needle)).length
+    .filter(
+      (row, at) =>
+        !(options.skipBreadcrumbs && at === BREADCRUMBS_ROW) &&
+        (options.within === undefined ? row : row.slice(0, options.within)).includes(needle),
+    ).length
 
 function repo() {
   const dir = tempDir('druk-long-')
@@ -119,7 +141,7 @@ test('the problems list gives a long diagnostic one row', async () => {
   // The tab strip shortens the name itself, so the modal's row is the only one
   // carrying the whole of it. Fifty of these at three rows apiece is a modal
   // several screens tall.
-  expect(rowsWith(t, 'really-long-name')).toBe(1)
+  expect(rowsWith(t, 'really-long-name', { skipBreadcrumbs: true })).toBe(1)
 }, 40000)
 
 test('the completion menu keeps a huge label, signature and doc inside its box', async () => {
@@ -193,8 +215,8 @@ test('the review panel gives a long note and a deep path one row each', async ()
   // is prose at whatever length it was typed, and the path is four folders deep.
   // The needle for the heading is the path's head, since the tab strip carries
   // the file's name too and shortens it itself.
-  expect(rowsWith(t, 'ISSUE 1')).toBe(1)
-  expect(rowsWith(t, 'src/features')).toBe(1)
+  expect(rowsWith(t, 'ISSUE 1', { within: SIDEBAR })).toBe(1)
+  expect(rowsWith(t, 'src/features', { within: SIDEBAR })).toBe(1)
 
   // And an answer to it, whose author is whatever a writer of the notes file
   // put there: one row, which is also the row the card's copy of it is drawn
@@ -212,8 +234,8 @@ test('the review panel gives a long note and a deep path one row each', async ()
   )
   await press(t, input => input.pressEnter())
   await untilFrame(t, '↳ you')
-  expect(rowsWith(t, '↳ you')).toBe(1)
-  expect(rowsWith(t, 'ISSUE 1')).toBe(1)
+  expect(rowsWith(t, '↳ you', { within: SIDEBAR })).toBe(1)
+  expect(rowsWith(t, 'ISSUE 1', { within: SIDEBAR })).toBe(1)
 }, 20000)
 
 test('the all-changes page gives a long path one row', async () => {

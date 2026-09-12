@@ -133,15 +133,15 @@ test('a long project name stays on its one header row', async () => {
   const base = fixture({})
   const long = join(
     base,
-    'a-folder-named-after-the-whole-issue-title-it-was-opened-for-and-then-some-more',
+    'A-FOLDER-NAMED-after-the-whole-issue-title-it-was-opened-for-and-then-some-more',
   )
   mkdirSync(long)
   writeFileSync(join(long, 'alpha.ts'), '')
   const t = await launch(long, {}, { width: 60 })
 
   const lines = t.captureCharFrame().split('\n')
-  expect(lines[2]).toContain('a-folder-named')
-  expect(lines[2]).toContain(' explorer')
+  expect(lines[1]).toContain('EXPLORER')
+  expect(lines[2]).toContain('A-FOLDER-NAMED')
   expect(lines[3]).toContain('alpha.ts')
 })
 

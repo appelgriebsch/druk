@@ -77,7 +77,7 @@ test('every advertised hotkey does something', async () => {
 
   t = await tree()
   await press(t, i => i.pressKey('b', { ctrl: true }))
-  check('Ctrl+B sidebar', !frame(t).includes('explorer'))
+  check('Ctrl+B sidebar', !frame(t).includes('EXPLORER'))
 
   t = await opened()
   await press(t, i => i.pressKey('w', { ctrl: true }))
@@ -116,7 +116,7 @@ test('every advertised hotkey does something', async () => {
   t = await opened()
   await pressEscape(t)
   await press(t, i => i.pressArrow('down'))
-  check('Esc editor → tree', frame(t).includes('explorer'))
+  check('Esc editor → tree', frame(t).includes('EXPLORER'))
 
   // Cut and paste go through the system clipboard, so they can only be swept on
   // a machine that has one — headless CI has no pbcopy/xclip to round-trip through.
@@ -133,9 +133,10 @@ test('every advertised hotkey does something', async () => {
   const dirCut = fixture(PROJECT)
   t = await launch(dirCut)
   await openFile(t, 'a.ts')
-  const alphaAt = frame(t).split('\n')[1]!.indexOf('alpha')
-  await t.mockMouse.drag(alphaAt, 1, alphaAt + 5, 1)
-  await t.mockMouse.release(alphaAt + 5, 1)
+  // Row 2: the tab strip is row 0 and the breadcrumbs row 1.
+  const alphaAt = frame(t).split('\n')[2]!.indexOf('alpha')
+  await t.mockMouse.drag(alphaAt, 2, alphaAt + 5, 2)
+  await t.mockMouse.release(alphaAt + 5, 2)
   await settle(t)
   await press(t, i => i.pressKey('x', { ctrl: true }))
   await press(t, i => i.pressKey('s', { ctrl: true }))

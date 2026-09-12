@@ -170,7 +170,7 @@ test('a jump to a line already drawn leaves the viewport alone', async () => {
 
   await gotoLine(t, '100')
   await untilFrame(t, 'const line99 = 99')
-  const top = 'const line90 = 90'
+  const top = 'const line91 = 91'
   expect(t.captureCharFrame()).toContain(top)
 
   // Four lines on — well inside what is already drawn, the step walking search

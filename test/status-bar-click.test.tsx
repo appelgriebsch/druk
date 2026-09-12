@@ -79,7 +79,7 @@ test('the changed-file count opens the source-control panel', async () => {
 
   const shown = t.captureCharFrame()
   expect(shown).toContain('Changes')
-  expect(shown).not.toContain('explorer')
+  expect(shown).not.toContain('EXPLORER')
 })
 
 test('the branch offers the branches to switch to', async () => {

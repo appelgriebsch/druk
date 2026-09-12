@@ -112,8 +112,9 @@ test('the line below keeps its own indentation', async () => {
 test('a selection takes every line it touches, whole', async () => {
   const { t, saved } = await open('one\ntwo\nthree\nfour\n')
   // Part of "two" through part of "three": both lines go, not just the letters.
-  const col = t.captureCharFrame().split('\n')[2]!.indexOf('two')
-  await t.mockMouse.drag(col + 1, 2, col + 2, 3)
+  // Row 3: the tab strip is row 0, the breadcrumbs row 1, and `one` row 2.
+  const col = t.captureCharFrame().split('\n')[3]!.indexOf('two')
+  await t.mockMouse.drag(col + 1, 3, col + 2, 4)
   await press(t, i => void i.pressKeys([CTRL_OPT_D]))
   expect(await saved()).toBe('one\nfour\n')
 })

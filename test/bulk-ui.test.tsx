@@ -38,7 +38,7 @@ describe('deleting a large folder', () => {
 
     // And the editor is still answering keys while the work goes on.
     await press(t, input => input.pressArrow('down'))
-    expect(t.captureCharFrame()).toContain('explorer')
+    expect(t.captureCharFrame()).toContain('EXPLORER')
   }, 30000)
 
   test('finishes, reports it, and the folder is gone', async () => {

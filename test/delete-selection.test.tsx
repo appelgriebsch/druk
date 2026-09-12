@@ -65,7 +65,7 @@ describe('deleting from the tree', () => {
 
     expect(selectedRow(t)).toBe('')
     await press(t, input => input.pressArrow('down'))
-    expect(t.captureCharFrame()).toContain('explorer')
+    expect(t.captureCharFrame()).toContain('EXPLORER')
   })
 
   test('deleting an expanded folder lands after everything it held', async () => {

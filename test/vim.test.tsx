@@ -265,12 +265,12 @@ describe('viewport', () => {
     const before = shown(t)
     expect(before).toContain('line 99')
     // G reveals the line by the smallest scroll, so it sits near the bottom.
-    expect(before[0]).not.toBe('line 90')
+    expect(before[0]).not.toBe('line 91')
 
     await type(t, 'zz')
     expect(at(t)).toBe('Ln 100, Col 1')
     const after = shown(t)
-    expect(after[0]).toBe('line 90')
+    expect(after[0]).toBe('line 91')
     const mid = after.indexOf('line 99')
     expect(Math.abs(mid - Math.floor(after.length / 2))).toBeLessThanOrEqual(1)
     expect(t.captureCharFrame()).not.toContain('●')
@@ -281,7 +281,7 @@ describe('viewport', () => {
     await type(t, '50zz')
     expect(at(t)).toBe('Ln 50, Col 1')
     const lines = shown(t)
-    expect(lines[0]).toBe('line 40')
+    expect(lines[0]).toBe('line 41')
     expect(lines).toContain('line 49')
   })
 
@@ -290,7 +290,7 @@ describe('viewport', () => {
     await type(t, '100G')
     await type(t, 'vjj')
     await type(t, 'zz')
-    expect(shown(t)[0]).toBe('line 92') // the caret is on line 102 after vjj
+    expect(shown(t)[0]).toBe('line 93') // the caret is on line 102 after vjj
     // The viewport moved; the selection is still the one `v` started.
     await type(t, 'd')
     expect(await save(t, file)).toContain('line 98\nine 101\n')

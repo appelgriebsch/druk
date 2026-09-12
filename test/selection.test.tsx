@@ -21,9 +21,13 @@ async function withOpenFile(content = 'const alpha = 1\nconst beta = 2\n') {
   return { t, dir }
 }
 
-/** Column of `word` on the editor's first content row. */
+/** The editor's first content row: the tab strip is 0 and the breadcrumbs 1. */
+const EDITOR_ROW = 2
+
+/** Column of `word` on the editor's first content row — row 2, under the tab
+ * strip and the breadcrumbs. */
 function colOf(t: Harness, word: string) {
-  const row = t.captureCharFrame().split('\n')[1]!
+  const row = t.captureCharFrame().split('\n')[EDITOR_ROW]!
   return row.indexOf(word)
 }
 
@@ -35,7 +39,7 @@ describe('mouse selection', () => {
     // Found from the frame rather than hard-coded: the editor's first column moves
     // whenever the sidebar is resized or the divider changes width.
     const from = colOf(t, 'alpha')
-    await t.mockMouse.drag(from, 1, from + 5, 1)
+    await t.mockMouse.drag(from, EDITOR_ROW, from + 5, EDITOR_ROW)
     await settle(t)
     expect(selected(t)).toContain('alpha')
   })
@@ -57,7 +61,7 @@ describe('mouse selection', () => {
   test('double-click selects the word under the cursor', async () => {
     const { t, dir } = await withOpenFile(CONTENT)
     const at = colOf(t, 'data')
-    await t.mockMouse.doubleClick(at, 1)
+    await t.mockMouse.doubleClick(at, EDITOR_ROW)
     await settle(t)
     // Typing replaces the selection — the same path Ctrl+A and a drag use.
     await press(t, input => void input.typeText('X'))
@@ -68,9 +72,9 @@ describe('mouse selection', () => {
   test('triple-click selects the whole line', async () => {
     const { t, dir } = await withOpenFile(CONTENT)
     const at = colOf(t, 'data')
-    await t.mockMouse.click(at, 1)
-    await t.mockMouse.click(at, 1)
-    await t.mockMouse.click(at, 1)
+    await t.mockMouse.click(at, EDITOR_ROW)
+    await t.mockMouse.click(at, EDITOR_ROW)
+    await t.mockMouse.click(at, EDITOR_ROW)
     await settle(t)
     await press(t, input => void input.typeText('X'))
     await save(t)
@@ -80,7 +84,7 @@ describe('mouse selection', () => {
   test('a single click does not select the word', async () => {
     const { t, dir } = await withOpenFile(CONTENT)
     const at = colOf(t, 'data')
-    await t.mockMouse.click(at, 1)
+    await t.mockMouse.click(at, EDITOR_ROW)
     await settle(t)
     await press(t, input => void input.typeText('X'))
     await save(t)
@@ -92,7 +96,7 @@ describe('mouse selection', () => {
   test('double-click inside a string selects only that word', async () => {
     const { t, dir } = await withOpenFile('const s = "hello world"\n')
     const at = colOf(t, 'hello')
-    await t.mockMouse.doubleClick(at, 1)
+    await t.mockMouse.doubleClick(at, EDITOR_ROW)
     await settle(t)
     await press(t, input => void input.typeText('X'))
     await save(t)
@@ -104,7 +108,7 @@ describe('mouse selection', () => {
     // The caret clamps to the line's `\n`, which is not a token: selecting it
     // would make the next keystroke pull the following line up.
     const at = colOf(t, 'const alpha = 1') + 'const alpha = 1'.length + 3
-    await t.mockMouse.doubleClick(at, 1)
+    await t.mockMouse.doubleClick(at, EDITOR_ROW)
     await settle(t)
     await press(t, input => void input.typeText('X'))
     await save(t)
@@ -114,7 +118,8 @@ describe('mouse selection', () => {
   test('double-clicking a blank line does not eat the blank lines around it', async () => {
     const { t, dir } = await withOpenFile('const alpha = 1\n\n\n\nconst beta = 2\n')
     const at = colOf(t, 'const alpha = 1')
-    await t.mockMouse.doubleClick(at, 2)
+    // The row under the first line: blank, as the ones under it are.
+    await t.mockMouse.doubleClick(at, EDITOR_ROW + 1)
     await settle(t)
     await press(t, input => void input.typeText('X'))
     await save(t)

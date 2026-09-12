@@ -74,10 +74,10 @@ describe('hover on clickable rows', () => {
   test('the selected row keeps its selection colour under the pointer', async () => {
     const t = await launch(fixture({ 'a.ts': 'const a = 1\n' }))
 
-    // The tree draws a file as `· name`; the open tab says `a.ts` too, so the
-    // glyph is what tells the rows apart. Clicking selects the row and leaves
-    // the pointer parked on it.
-    const y = rowOf(t, '· a.ts')
+    // The tree draws a file as `   name` under the project row; the open tab
+    // says `a.ts` too, so the indent is what tells the rows apart. Clicking
+    // selects the row and leaves the pointer parked on it.
+    const y = rowOf(t, '   a.ts')
     expect(y).toBeGreaterThan(0)
     await t.mockMouse.click(3, y)
     await settle(t)

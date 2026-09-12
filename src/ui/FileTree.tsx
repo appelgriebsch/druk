@@ -7,6 +7,7 @@ import { iconFor } from '../icons'
 import { ui } from '../themes'
 import { useHoverKey } from './hover'
 import { createScrollList, scrollbarOptions } from './list'
+import { PanelHeader } from './PanelHeader'
 import { useTooltip } from './tooltip'
 
 export interface FileTreeProps {
@@ -144,11 +145,33 @@ export function FileTree(props: FileTreeProps) {
       flexBasis={0}
       onMouseDown={() => props.onFocus()}
     >
-      {/* One row, not two: the project and the view it is showing are one fact,
-          and a sidebar that spends three rows before its first file reads as
-          chrome. The label goes right, where it stays out of the name's way. */}
+      {/* VS Code's two rows: the view's own title, then the folder it is open
+          on as a section header. The title says which view has the sidebar —
+          which the activity bar's icons only hint at — and the name below it is
+          the button that switches workspace. */}
+      <PanelHeader title="Explorer" width={props.width} focused={props.focused}>
+        {/* The same arrowhead a row's own folder wears, pointing the way it
+            folds — and gone when there is nothing open to fold. */}
+        <Show when={props.expanded.size > 0}>
+          <box
+            ref={collapse.ref}
+            flexShrink={0}
+            backgroundColor={collapse.lit() ? ui.hoverBg : ui.sidebarBg}
+            onMouseDown={props.onCollapseAll}
+            onMouseOver={collapse.enter}
+            onMouseOut={collapse.leave}
+          >
+            <text
+              fg={collapse.lit() ? ui.text : ui.dim}
+              bg={collapse.lit() ? ui.hoverBg : ui.sidebarBg}
+              content="▴"
+            />
+          </box>
+        </Show>
+      </PanelHeader>
       <box
         height={1}
+        flexShrink={0}
         flexDirection="row"
         backgroundColor={ui.sidebarBg}
         paddingLeft={2}
@@ -167,30 +190,11 @@ export function FileTree(props: FileTreeProps) {
             bg={project.lit() ? ui.hoverBg : ui.sidebarBg}
             flexShrink={1}
             wrapMode="none"
-            content={props.rootName}
+            content={props.rootName.toUpperCase()}
             attributes={TextAttributes.BOLD}
           />
         </box>
         <box flexGrow={1} backgroundColor={ui.sidebarBg} />
-        {/* The same arrowhead a row's own folder wears, pointing the way it
-            folds — and gone when there is nothing open to fold. */}
-        <Show when={props.expanded.size > 0}>
-          <box
-            ref={collapse.ref}
-            flexShrink={0}
-            backgroundColor={collapse.lit() ? ui.hoverBg : ui.sidebarBg}
-            onMouseDown={props.onCollapseAll}
-            onMouseOver={collapse.enter}
-            onMouseOut={collapse.leave}
-          >
-            <text
-              fg={collapse.lit() ? ui.text : ui.dim}
-              bg={collapse.lit() ? ui.hoverBg : ui.sidebarBg}
-              content="▴ "
-            />
-          </box>
-        </Show>
-        <text fg={ui.faint} bg={ui.sidebarBg} flexShrink={0} content=" explorer" />
       </box>
       <scrollbox
         ref={list.ref}
@@ -222,7 +226,10 @@ export function FileTree(props: FileTreeProps) {
              */
             const icon = () =>
               iconFor(props.iconTheme, { name: node.name, isDir: node.isDir, expanded: open() })
-            const glyph = () => icon()?.glyph ?? (node.isDir ? (open() ? '▾' : '▸') : '·')
+            // No mark on a file where no icon theme draws one: VS Code's tree
+            // gives a file the chevron's column and leaves it empty, which is
+            // what lets the names read as a list rather than as a bullet list.
+            const glyph = () => icon()?.glyph ?? (node.isDir ? (open() ? '▾' : '▸') : ' ')
             const glyphColor = () =>
               leaving() ? ui.faint : (icon()?.color ?? (node.isDir ? ui.dim : ui.faint))
             const status = () => statusOf(node)
@@ -254,22 +261,15 @@ export function FileTree(props: FileTreeProps) {
                     the arrow and slid the row's glyphs a column left — which made
                     them jump around as a resize changed which rows overflow. The
                     name is the only thing allowed to give. */}
-                <text
-                  fg={ui.faint}
-                  bg={bg()}
-                  flexShrink={0}
-                  content={` ${'│ '.repeat(node.depth)}`}
-                />
+                {/* Two spaces a level, no rules: VS Code's indent guides are a
+                    hairline a terminal has no weight for, and drawn as `│` they
+                    are the loudest thing in the panel. */}
+                <text fg={ui.faint} bg={bg()} flexShrink={0} content={' '.repeat(node.depth * 2)} />
                 <text fg={glyphColor()} bg={bg()} flexShrink={0} content={`${glyph()} `} />
                 {/* The name takes the slack, so the mark is pushed to the panel's
                     right edge and every mark lines up in one column. */}
                 <box flexGrow={1} flexDirection="row" backgroundColor={bg()}>
-                  <text
-                    fg={nameColor()}
-                    bg={bg()}
-                    content={node.name}
-                    attributes={node.isDir && !ignored() ? TextAttributes.BOLD : undefined}
-                  />
+                  <text fg={nameColor()} bg={bg()} content={node.name} />
                   {/* Beside the name, not in the mark column: a symlink is a
                       property of the entry, and the marks there are git's. */}
                   <Show when={node.symlink}>

@@ -9,9 +9,10 @@ const long = `${Array.from({ length: 400 }, (_, index) => `line ${index}`).join(
 /** Publishes and clears one diagnostic on a timer, the way a busy server does. */
 const TICK = join(import.meta.dir, 'fixtures', 'tick-lsp.ts')
 
-/** First line number in the gutter, i.e. where the viewport sits. */
+/** First line number in the gutter, i.e. where the viewport sits. Row 2: the
+ * tab strip is row 0 and the breadcrumbs row 1. */
 function topLine(t: Harness): number {
-  const row = t.captureCharFrame().split('\n')[1]!
+  const row = t.captureCharFrame().split('\n')[2]!
   return Number(row.trim().split(/\s+/)[0])
 }
 

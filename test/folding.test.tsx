@@ -122,7 +122,7 @@ test('folding leaves the view where it was', async () => {
       .split('\n')
       .find(row => /const x|function f/.test(row))
   const before = topRow()
-  expect(before).toContain('const x36 = 36')
+  expect(before).toContain('const x37 = 37')
 
   // `setText` drops the buffer to the top and placing the caret afterwards
   // scrolls the least amount that reveals it — which used to leave the block

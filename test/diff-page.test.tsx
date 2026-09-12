@@ -67,7 +67,7 @@ test('the page survives switching the sidebar back to the tree', async () => {
   // Git → Review → Ext → Files: the strip is a cycle over the sidebar's views.
   await pressTimes(t, 3, i => i.pressTab({ shift: true }))
   const frame = t.captureCharFrame()
-  expect(frame).toContain('explorer') // the tree is back in the sidebar…
+  expect(frame).toContain('EXPLORER') // the tree is back in the sidebar…
   expect(frame).toContain('+ ALPHA') // …and the changes are still on screen
 })
 

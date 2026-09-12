@@ -26,7 +26,16 @@ where the close × goes, and a file its language server has something to say abo
 wears that server's worst mark (`●` error, `▲` warning, the glyphs the status bar and
 the problems list use) in the slot before its name, with the name in the same colour;
 the mark outranks the file icon rather than sitting beside it, so a tab that starts
-erroring shifts nothing —
+erroring shifts nothing; the strip is the *editor's* own row rather than the
+terminal's, VS Code's arrangement — it begins where the sidebar ends, so the
+sidebar reaches the top of the window and the strip's budget is the editor
+column's width (`slotWidth` in `App.tsx`, which every page over that slot is
+sized from) — and under it sits the breadcrumb row naming the open file's path
+from the project root (`src/ui/Breadcrumbs.tsx`, cut from the *front*, since the
+file's own name is the half worth keeping; no symbols in it, which would need the
+server's document symbols and is a feature rather than a look). Two rows of
+chrome, so the editor's first content row is row 2 of the frame and every page
+over the slot is a row shorter than the terminal —
 a quick look at the row under the tree's cursor that opens no
 tab at all (Space in the tree, palette → View → Preview file — the file over the
 editor slot, syntax-coloured, following the cursor as ↑↓ walks the tree and paging
@@ -425,7 +434,13 @@ so the editor can say so; the glyph takes the expansion
 arrow's column, since a folder icon has an open and a closed form — in the git panel
 that is the column a file row spent on nothing, so the two sidebar views line their
 names up either way — and the
-default is `none` because nothing can ask a terminal what its font holds; the same
+default is `none` because nothing can ask a terminal what its font holds — what
+*can* be read is where a glyph provably cannot arrive, and `usableIconTheme`
+(`src/icons/index.ts`, applied once in `activeIconTheme`) stands a patched set
+down to `unicode` on a console font (`TERM=linux`, `dumb`, `vt*`) and drops icons
+altogether in a locale that is not UTF-8, leaving the config's own choice alone
+so the same file still draws icons on the machine that has the font;
+`DRUK_ICON_FALLBACK=1/0` forces it; the same
 icon reaches the tab strip with `tabIcons`, off by default because the strip is one
 row and a column per tab is a tab fewer on a narrow terminal),
 an extension system (JSON manifests in `$XDG_CONFIG_HOME/druk/extensions/<id>/extension.json`
@@ -763,7 +778,7 @@ dependency rule, and recipes for the extension points:
 | terminal progress | the one status slot (`src/app/status.ts`) — a git mutation, bulk file op or install occupies it. A background operation takes it with `claimBusy`, which hands back the release and refuses to hand back anything else: an install that finds the slot taken runs without it rather than clearing a bulk delete's counter, since that would idle the bar mid-rewrite *and* reopen `whileFree` for a second op. `setBusy` is for updating a count already claimed. `reportProgress` (`src/core/progress.ts`) writes OSC 9;4 so Ghostty, WezTerm, iTerm2, kitty, Windows Terminal and recent VTE draw their own loader; an unsupported terminal is a no-op, and an exit hook puts the indicator out where `onCleanup` never runs |
 | market extension | a folder under `extensions/` holding `extension.json`, then `bun run extensions` to regenerate `extensions/index.json` — `test/extensions-repo.test.ts` fails when the committed index is stale, and bumping the manifest `version` is what makes installed copies see an update |
 | row in the extensions panel | `src/app/extensionsPanel.ts` (the cursor, the fold state and what Enter does); `src/ui/ExtensionsPanel.tsx` owns the `ExtensionRow` type, draws whatever `rows()` returns and reports clicks, and the keys live in `src/app/keyboard.ts` beside the tree's and the git panel's. Row/view-model types live in the ui component and the controller imports them — the `SettingRow` arrangement, enforced by `test/boundaries.test.ts` |
-| sidebar view | `SidebarView` in `src/ui/SidebarTabs.tsx` (add a `short` initial — the strip falls back to those in a narrow sidebar), a branch in `App.tsx`'s sidebar, one in `keyboard.ts`'s pane switch, a `KeyScope` in `src/ui/keys.ts` with a `SCOPE_LABELS` entry in `KeyPeek.tsx`, a `toggle…View` on `src/app/panes.ts`, and its place in the Shift+Tab cycle, which is spelt out as one `showView` per pane block in `keyboard.ts` rather than held as a list |
+| sidebar view | `SidebarView` in `src/ui/SidebarTabs.tsx` (its title row is `PanelHeader`, which draws the view's name uppercase as VS Code does and takes that view's own buttons as children) (add a `short` initial — the strip falls back to those in a narrow sidebar), a branch in `App.tsx`'s sidebar, one in `keyboard.ts`'s pane switch, a `KeyScope` in `src/ui/keys.ts` with a `SCOPE_LABELS` entry in `KeyPeek.tsx`, a `toggle…View` on `src/app/panes.ts`, and its place in the Shift+Tab cycle, which is spelt out as one `showView` per pane block in `keyboard.ts` rather than held as a list |
 | branch-comparison behaviour | git queries and models in `src/core/git.ts`, state and caches in `src/app/comparison.ts`, rows in `ComparePanel` and the detail page in `ComparisonView` |
 | review row or key | `src/app/review.ts` (the notes, their replies, the fetched comments, the rows and what Enter does); `ui/ReviewPanel.tsx` draws `rows()` and reports clicks, the keys sit in `keyboard.ts` beside the git panel's, and the note's shape and where it is persisted are `src/core/review.ts`. A reply is a note carrying `parent`, so anything that lists remarks reads `threadStarts()` rather than `notes()` — a thread is one mark, one heading count and one card |
 | source-control row kind | `ChangeRow` in `src/core/changeTree.ts` — `changeRows` builds the headings and `rowArea`/`rowRel`/`foldKey` are how a row's fold state is addressed, the area being part of the key because one path can sit under both headings at once. `changesFor` answers what a row *stands for*, and reads the change list rather than the rows: a folded folder's files are not in `rows` and staging one still has to reach them |
@@ -954,6 +969,12 @@ harness exists to encode:
 - **Escape needs a gap.** Esc is the prefix of every arrow/function-key sequence, so the
   parser holds it until it knows nothing follows. Use `pressEscape()`, not
   `mockInput.pressEscape()`.
+- **The editor's first content row is row 2, and its column is not 0.** The tab strip is
+  row 0 and the breadcrumbs row 1, so a test that clicks or drags in the text works from
+  row 2 down; the editor's first column moves with the sidebar, so read it off the frame
+  (`row.indexOf(word)`) rather than hard-coding one. The breadcrumbs also *repeat* the
+  open file's path, which is what makes a "one row carries this name" assertion count two
+  (`rowsWith` in `test/long-names.test.tsx` skips that row for exactly this).
 - **One flush per assertion, not per key.** A flush that repaints the editor costs ~20ms,
   so a loop of `await press(...)` is where a test's seconds go — and where the 5s budget
   went when the suite ran loaded. Send the keys, then flush once: `pressTimes()` for a

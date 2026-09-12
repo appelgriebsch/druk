@@ -5,13 +5,13 @@ import { fixture, launch, press } from './helpers'
 describe('sidebar', () => {
   test('Ctrl+B hides and shows the tree', async () => {
     const t = await launch(fixture({ 'alpha.ts': 'const a = 1\n' }))
-    expect(t.captureCharFrame()).toContain('explorer')
+    expect(t.captureCharFrame()).toContain('EXPLORER')
 
     await press(t, input => input.pressKey('b', { ctrl: true }))
-    expect(t.captureCharFrame()).not.toContain('explorer')
+    expect(t.captureCharFrame()).not.toContain('EXPLORER')
 
     await press(t, input => input.pressKey('b', { ctrl: true }))
-    expect(t.captureCharFrame()).toContain('explorer')
+    expect(t.captureCharFrame()).toContain('EXPLORER')
   })
 
   test('typing goes to the editor while the sidebar is hidden', async () => {

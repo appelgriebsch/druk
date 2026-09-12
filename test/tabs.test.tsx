@@ -8,7 +8,8 @@ test('the tab bar is a single row above the editor', async () => {
   await press(t, i => i.pressEnter())
   const rows = t.captureCharFrame().split('\n')
   expect(rows[0]).toContain('a.ts')
-  expect(rows[1]).toContain('1 x') // editor starts on the next row
+  expect(rows[1]).toContain('a.ts') // the breadcrumbs, under the strip
+  expect(rows[2]).toContain('1 x') // and the editor under those
 })
 
 test('long names are shortened, never clipped mid-word', async () => {

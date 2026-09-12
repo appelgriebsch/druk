@@ -8,6 +8,8 @@ import { ui } from '../themes'
 import { MARKS, statusColor } from './FileTree'
 import { useHover, useHoverKey } from './hover'
 import { createScrollList, rowBg, scrollbarOptions } from './list'
+import { PanelHeader } from './PanelHeader'
+import { cut } from './text'
 import { TextInput } from './TextInput'
 import { useTooltip } from './tooltip'
 
@@ -132,23 +134,11 @@ export function GitPanel(props: GitPanelProps) {
       flexBasis={0}
       onMouseDown={() => props.onFocus()}
     >
-      {/* One row, as the tree's header is: the branch takes the left, and what
-          the panel is comparing against takes the right. */}
-      <box
-        height={1}
-        flexDirection="row"
-        backgroundColor={ui.sidebarBg}
-        paddingLeft={2}
-        paddingRight={1}
-      >
-        <text
-          fg={props.focused ? ui.text : ui.dim}
-          bg={ui.sidebarBg}
-          flexShrink={1}
-          content={headline()}
-          attributes={TextAttributes.BOLD}
-        />
-        <box flexGrow={1} backgroundColor={ui.sidebarBg} />
+      {/* VS Code's title row. What the list is *against* rides on its right:
+          the branch normally, and the base while one is set — against another
+          branch every file it touches is marked, which reads as a broken tree
+          until you know why, so that fact outranks the branch's name. */}
+      <PanelHeader title="Source control" width={props.width} focused={props.focused}>
         {/* Only tree view has folders to fold, and only while one is open: the
             flat list draws no folder rows at all. */}
         <Show when={props.rows.some(row => row.kind === 'dir' && !row.collapsed)}>
@@ -167,18 +157,17 @@ export function GitPanel(props: GitPanelProps) {
             />
           </box>
         </Show>
-        {/* The base has to be said somewhere: against another branch every file
-            it touches is marked, which reads as a broken tree until you know why. */}
-        <Show when={props.base}>
-          <text
-            fg={ui.accent}
-            bg={ui.sidebarBg}
-            flexShrink={0}
-            wrapMode="none"
-            content={`vs ${props.base}`}
-          />
-        </Show>
-      </box>
+        <text
+          fg={props.base ? ui.accent : props.focused ? ui.text : ui.dim}
+          bg={ui.sidebarBg}
+          flexShrink={0}
+          wrapMode="none"
+          content={cut(
+            props.base ? `vs ${props.base}` : headline(),
+            Math.max(6, props.width - 'SOURCE CONTROL'.length - 5),
+          )}
+        />
+      </PanelHeader>
       {/* VS Code's commit box: the message field over the change list, with the
           ✓ Commit button and Sync under it. Only while the index is in play —
           against a comparison base there is nothing a commit could be about. */}
@@ -328,12 +317,13 @@ export function GitPanel(props: GitPanelProps) {
                 >
                   {/* Indent and glyph never give, as in the tree: shrinking them
                       slid every row's marks a column left. The name is the only
-                      thing allowed to give. */}
+                      thing allowed to give. Two spaces a level and no rules —
+                      the tree beside it indents the same way. */}
                   <text
                     fg={ui.faint}
                     bg={bg()}
                     flexShrink={0}
-                    content={` ${'│ '.repeat(row.depth)}`}
+                    content={` ${'  '.repeat(row.depth)}`}
                   />
                   <text fg={glyphColor()} bg={bg()} flexShrink={0} content={`${glyph()} `} />
                   <box flexGrow={1} flexDirection="row" backgroundColor={bg()}>

@@ -36,10 +36,10 @@ test('Ctrl+Opt+G shows the changed files, Esc puts the tree back', async () => {
   const open = frame(t)
   expect(open).toContain('Changes')
   expect(open).toContain('a.ts')
-  expect(open).not.toContain('explorer')
+  expect(open).not.toContain('EXPLORER')
 
   await pressEscape(t)
-  expect(frame(t)).toContain('explorer')
+  expect(frame(t)).toContain('EXPLORER')
 })
 
 test('outside a repository the panel says so instead of listing nothing', async () => {
@@ -99,7 +99,7 @@ test('c commits the change from the panel, p reports on push', async () => {
   // Push has no remote to reach; the point is that `p` runs it and reports.
   await press(t, i => void i.typeText('p'))
   await settle(t, 300)
-  expect(frame(t)).not.toContain('explorer') // still in the panel, no paste happened
+  expect(frame(t)).not.toContain('EXPLORER') // still in the panel, no paste happened
 })
 
 test('the peek strip advertises the panel keys, not the tree ones', async () => {
@@ -122,7 +122,7 @@ test('the palette opens the panel too', async () => {
 
 test('Shift+Tab walks the strip: Files → Git → Review → Ext → Files', async () => {
   const t = await launch(repo())
-  expect(frame(t)).toContain('explorer')
+  expect(frame(t)).toContain('EXPLORER')
 
   await press(t, i => i.pressTab({ shift: true }))
   const open = frame(t)
@@ -136,7 +136,7 @@ test('Shift+Tab walks the strip: Files → Git → Review → Ext → Files', as
   expect(frame(t)).toContain('INSTALLED')
 
   await press(t, i => i.pressTab({ shift: true }))
-  expect(frame(t)).toContain('explorer')
+  expect(frame(t)).toContain('EXPLORER')
 })
 
 test('r in the panel opens the review, which is a button of its own', async () => {

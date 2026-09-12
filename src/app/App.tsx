@@ -1,4 +1,4 @@
-import { basename, dirname } from 'node:path'
+import { basename, dirname, relative } from 'node:path'
 
 import type { BorderSides, MouseEvent } from '@opentui/core'
 import { useRenderer, useTerminalDimensions } from '@opentui/solid'
@@ -21,6 +21,7 @@ import { filetypeForPath } from '../languages/highlight'
 import { SEVERITY_RANK } from '../lsp/protocol'
 import type { ProblemSeverity } from '../lsp/protocol'
 import { ui } from '../themes'
+import { Breadcrumbs } from '../ui/Breadcrumbs'
 import { ChangesView } from '../ui/ChangesView'
 import { ComparePanel } from '../ui/ComparePanel'
 import { ComparisonView } from '../ui/ComparisonView'
@@ -355,6 +356,26 @@ export function App(props: {
   const sidebarWidthFromPointer = (x: number) =>
     config.sidebarPosition === 'right' ? dimensions().width - x - 1 : x
 
+  /**
+   * The editor's own column: the terminal less the sidebar and its divider while
+   * one is showing. Every page drawn over the editor slot is sized from it.
+   */
+  const slotWidth = () => dimensions().width - (panes.sidebar() ? settings.treeWidth() + 1 : 0)
+
+  /** The path the breadcrumb row names, or null when nothing is open. */
+  const breadcrumb = () => {
+    const path = workspace.activePath()
+    if (!path) return null
+    const rel = relative(rootDir, path)
+    return rel && !rel.startsWith('..') ? rel : path
+  }
+
+  /**
+   * Rows the editor slot has: the terminal less the tab strip, the status bar
+   * and — while a file is open — the breadcrumb row over it.
+   */
+  const slotHeight = () => dimensions().height - 2 - (breadcrumb() ? 1 : 0)
+
   const startResize = (event: MouseEvent) => {
     setResizing(true)
     settings.resizeSidebar(sidebarWidthFromPointer(event.x))
@@ -586,33 +607,6 @@ export function App(props: {
 
   return (
     <box flexDirection="column" width="100%" height="100%" backgroundColor={ui.bg}>
-      <Tabs
-        tabs={workspace.views().map(id => ({
-          id,
-          // A markdown tab reading as the rendered document is still the one
-          // tab, so it is the same name with a mark rather than a second entry.
-          name: id === workspace.renderedPath() ? `¶ ${basename(id)}` : basename(id),
-          dirty: workspace.buffers[id]?.dirty ?? false,
-          preview: id === workspace.previewPath(),
-          severity: tabSeverity(id),
-          // A rendered-markdown tab spends the glyph slot on the mark that says
-          // which it is; only a plain file tab has it to spare.
-          icon:
-            config.tabIcons && id !== workspace.renderedPath()
-              ? iconFor(settings.activeIconTheme(), { name: basename(id), isDir: false })
-              : null,
-        }))}
-        activeId={workspace.activeView()}
-        canBack={navigation.canBack()}
-        canForward={navigation.canForward()}
-        onSelect={workspace.showView}
-        onClose={workspace.closeView}
-        onBack={navigation.back}
-        onForward={navigation.forward}
-        onOverflow={() => overlays.setPicker('tabs')}
-        markdown={markdownTab()}
-        onToggleMarkdown={workspace.toggleRendered}
-      />
       {/* Drag capture lives on the row, not the divider: the pointer leaves a
           one-column target immediately, and each drag event is delivered to
           whatever sits under it. `row-reverse` puts the same children on the
@@ -782,212 +776,250 @@ export function App(props: {
             />
           </box>
         </Show>
-        {/* The diff pane sits over the editor's slot only, so the tabs, tree and
-            status bar stay put — it reads as a view of the editor, not a modal. */}
+        {/* The tab strip and the breadcrumbs sit over the editor's column, not
+            over the whole terminal — VS Code's arrangement, where the sidebar
+            reaches the top of the window. The pages below them cover the
+            editor's slot only, so the strip, the tree and the status bar stay
+            put: a page reads as a view of the editor, not as a modal. */}
         <box flexGrow={1} flexDirection="column">
-          <EditorPane
-            path={workspace.activePath()}
-            content={workspace.activeBuffer()?.content ?? ''}
-            rootName={basename(rootDir) || rootDir}
-            branch={git.branch()}
-            version={currentVersion()}
-            filetype={workspace.activePath() ? filetypeForPath(workspace.activePath()!) : undefined}
-            // Also unfocused while the diff or a viewer covers the pane: the
-            // terminal's own cursor tracks the focused textarea and is drawn
-            // over everything, so a focused editor bleeds a phantom block into
-            // whatever page sits on top.
-            focused={panes.focus() === 'editor' && !editorCovered()}
-            reloadKey={editor.reloadKey()}
-            goto={editor.goto()}
-            history={editor.history()}
-            edit={editor.edit()}
-            lineOp={editor.lineOp()}
-            lineHome={editor.lineHome()}
-            foldOp={editor.foldOp()}
-            vim={config.vim}
-            cursorStyle={config.cursorStyle}
-            wrap={config.wrap}
-            scrollPastEnd={config.scrollPastEnd}
-            tabSize={config.tabSize}
-            gitLines={git.gitLines()}
-            problems={problemLines()}
-            problemRanges={problemRanges()}
-            problemText={config.lspInline}
-            conflicts={workspace.mergeConflicts()}
-            reviews={review.marks()}
-            reviewText={config.reviewInline}
-            // Only while the panel is showing: the card is a reading aid that
-            // covers the lines under it, which is a trade worth making for the
-            // review and not for ordinary editing.
-            reviewCard={panes.sidebar() && panes.view() === 'review' ? review.card() : null}
-            complete={
-              config.lsp && config.lspCompletion
-                ? (line, col) => {
-                    const path = workspace.activePath()
-                    return path ? lsp.complete(path, line, col) : Promise.resolve(null)
-                  }
-                : null
-            }
-            resolveCompletion={
-              config.lsp && config.lspCompletion
-                ? item => {
-                    const path = workspace.activePath()
-                    return path ? lsp.resolveCompletion(path, item) : Promise.resolve(null)
-                  }
-                : null
-            }
-            completionRequest={editor.completion()}
-            onCompletionMenu={editor.setCompletionOpen}
-            notice={workspace.notice()}
-            // The diff is a page over this pane, not an overlay — but the hidden
-            // textarea must still not eat keys meant for it.
-            blocked={overlays.overlay() || editorCovered()}
-            onChange={workspace.onEditorChange}
-            onCursor={editor.setCursor}
-            onSelection={editor.setSelection}
-            onFocus={() => panes.setFocus('editor')}
-            onVimMode={editor.setVimMode}
-            onQuit={promptHandlers.quit}
+          <Tabs
+            width={slotWidth()}
+            tabs={workspace.views().map(id => ({
+              id,
+              // A markdown tab reading as the rendered document is still the one
+              // tab, so it is the same name with a mark rather than a second entry.
+              name: id === workspace.renderedPath() ? `¶ ${basename(id)}` : basename(id),
+              dirty: workspace.buffers[id]?.dirty ?? false,
+              preview: id === workspace.previewPath(),
+              severity: tabSeverity(id),
+              // A rendered-markdown tab spends the glyph slot on the mark that says
+              // which it is; only a plain file tab has it to spare.
+              icon:
+                config.tabIcons && id !== workspace.renderedPath()
+                  ? iconFor(settings.activeIconTheme(), { name: basename(id), isDir: false })
+                  : null,
+            }))}
+            activeId={workspace.activeView()}
+            canBack={navigation.canBack()}
+            canForward={navigation.canForward()}
+            onSelect={workspace.showView}
+            onClose={workspace.closeView}
+            onBack={navigation.back}
+            onForward={navigation.forward}
+            onOverflow={() => overlays.setPicker('tabs')}
+            markdown={markdownTab()}
+            onToggleMarkdown={workspace.toggleRendered}
           />
-          <Show when={activeImage()}>
-            {(path: () => string) => (
-              <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={40}>
-                <ImageView
-                  path={path()}
-                  width={dimensions().width - (panes.sidebar() ? settings.treeWidth() + 1 : 0)}
-                  height={dimensions().height - 2}
-                  onFocus={() => panes.setFocus('editor')}
-                />
-              </box>
-            )}
+          <Show when={breadcrumb()}>
+            <Breadcrumbs rel={breadcrumb()} width={slotWidth()} />
           </Show>
-          {/* Keep one owner for the App lifetime: a remount can queue its open
+          <box flexGrow={1} flexDirection="column">
+            <EditorPane
+              path={workspace.activePath()}
+              content={workspace.activeBuffer()?.content ?? ''}
+              rootName={basename(rootDir) || rootDir}
+              branch={git.branch()}
+              version={currentVersion()}
+              filetype={
+                workspace.activePath() ? filetypeForPath(workspace.activePath()!) : undefined
+              }
+              // Also unfocused while the diff or a viewer covers the pane: the
+              // terminal's own cursor tracks the focused textarea and is drawn
+              // over everything, so a focused editor bleeds a phantom block into
+              // whatever page sits on top.
+              focused={panes.focus() === 'editor' && !editorCovered()}
+              reloadKey={editor.reloadKey()}
+              goto={editor.goto()}
+              history={editor.history()}
+              edit={editor.edit()}
+              lineOp={editor.lineOp()}
+              lineHome={editor.lineHome()}
+              foldOp={editor.foldOp()}
+              vim={config.vim}
+              cursorStyle={config.cursorStyle}
+              wrap={config.wrap}
+              scrollPastEnd={config.scrollPastEnd}
+              tabSize={config.tabSize}
+              gitLines={git.gitLines()}
+              problems={problemLines()}
+              problemRanges={problemRanges()}
+              problemText={config.lspInline}
+              conflicts={workspace.mergeConflicts()}
+              reviews={review.marks()}
+              reviewText={config.reviewInline}
+              // Only while the panel is showing: the card is a reading aid that
+              // covers the lines under it, which is a trade worth making for the
+              // review and not for ordinary editing.
+              reviewCard={panes.sidebar() && panes.view() === 'review' ? review.card() : null}
+              complete={
+                config.lsp && config.lspCompletion
+                  ? (line, col) => {
+                      const path = workspace.activePath()
+                      return path ? lsp.complete(path, line, col) : Promise.resolve(null)
+                    }
+                  : null
+              }
+              resolveCompletion={
+                config.lsp && config.lspCompletion
+                  ? item => {
+                      const path = workspace.activePath()
+                      return path ? lsp.resolveCompletion(path, item) : Promise.resolve(null)
+                    }
+                  : null
+              }
+              completionRequest={editor.completion()}
+              onCompletionMenu={editor.setCompletionOpen}
+              notice={workspace.notice()}
+              // The diff is a page over this pane, not an overlay — but the hidden
+              // textarea must still not eat keys meant for it.
+              blocked={overlays.overlay() || editorCovered()}
+              onChange={workspace.onEditorChange}
+              onCursor={editor.setCursor}
+              onSelection={editor.setSelection}
+              onFocus={() => panes.setFocus('editor')}
+              onVimMode={editor.setVimMode}
+              onQuit={promptHandlers.quit}
+            />
+            <Show when={activeImage()}>
+              {(path: () => string) => (
+                <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={40}>
+                  <ImageView
+                    path={path()}
+                    width={slotWidth()}
+                    height={slotHeight()}
+                    onFocus={() => panes.setFocus('editor')}
+                  />
+                </box>
+              )}
+            </Show>
+            {/* Keep one owner for the App lifetime: a remount can queue its open
               before the previous instance's late document close. */}
-          <PdfView
-            path={activePdf()}
-            width={dimensions().width - (panes.sidebar() ? settings.treeWidth() + 1 : 0)}
-            height={dimensions().height - 2}
-            focused={panes.focus() === 'editor'}
-            blocked={overlays.overlay() || workspace.page() !== null || comparison.detailOpen()}
-            onFocus={() => panes.setFocus('editor')}
-          />
-          <Show when={workspace.renderedPath()}>
-            {(path: () => string) => (
-              <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={40}>
-                <MarkdownView
-                  path={path()}
-                  name={basename(path())}
-                  content={workspace.buffers[path()]?.content ?? ''}
-                  width={dimensions().width - (panes.sidebar() ? settings.treeWidth() + 1 : 0)}
+            <PdfView
+              path={activePdf()}
+              width={slotWidth()}
+              height={slotHeight()}
+              focused={panes.focus() === 'editor'}
+              blocked={overlays.overlay() || workspace.page() !== null || comparison.detailOpen()}
+              onFocus={() => panes.setFocus('editor')}
+            />
+            <Show when={workspace.renderedPath()}>
+              {(path: () => string) => (
+                <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={40}>
+                  <MarkdownView
+                    path={path()}
+                    name={basename(path())}
+                    content={workspace.buffers[path()]?.content ?? ''}
+                    width={slotWidth()}
+                    focused={panes.focus() === 'editor'}
+                    blocked={overlays.overlay()}
+                    onFocus={() => panes.setFocus('editor')}
+                    onShowSource={workspace.toggleRendered}
+                  />
+                </box>
+              )}
+            </Show>
+            <Show when={workspace.page() === 'settings'}>
+              <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={60}>
+                <SettingsView
+                  rows={settings.rows()}
+                  scope={settings.scope()}
+                  onToggleScope={settings.toggleScope}
+                  configFile={settings.configFile()}
+                  width={slotWidth()}
                   focused={panes.focus() === 'editor'}
                   blocked={overlays.overlay()}
                   onFocus={() => panes.setFocus('editor')}
-                  onShowSource={workspace.toggleRendered}
+                  onClose={() => workspace.setPage(null)}
                 />
               </box>
-            )}
-          </Show>
-          <Show when={workspace.page() === 'settings'}>
-            <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={60}>
-              <SettingsView
-                rows={settings.rows()}
-                scope={settings.scope()}
-                onToggleScope={settings.toggleScope}
-                configFile={settings.configFile()}
-                width={dimensions().width - (panes.sidebar() ? settings.treeWidth() + 1 : 0)}
-                focused={panes.focus() === 'editor'}
-                blocked={overlays.overlay()}
-                onFocus={() => panes.setFocus('editor')}
-                onClose={() => workspace.setPage(null)}
-              />
-            </box>
-          </Show>
-          <Show when={workspace.page() === 'lspStatus'}>
-            <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={60}>
-              <LspStatusView
-                servers={serverList()}
-                width={dimensions().width - (panes.sidebar() ? settings.treeWidth() + 1 : 0)}
-                focused={panes.focus() === 'editor'}
-                blocked={overlays.overlay()}
-                onFocus={() => panes.setFocus('editor')}
-                onRestart={actions.restartLsp}
-                onUninstall={actions.uninstallServer}
-                onClose={() => workspace.setPage(null)}
-              />
-            </box>
-          </Show>
-          <Show when={workspace.page() === 'allChanges'}>
-            <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={60}>
-              <ChangesView
-                sections={actions.allChanges()}
-                meta={actions.allChangesMeta()}
-                focusKey={rowSlotKey(git.cursorRow())}
-                title={git.diffBase() ? `Against ${git.diffBase()}` : 'Uncommitted'}
-                mode={config.diffView}
-                width={dimensions().width - (panes.sidebar() ? settings.treeWidth() + 1 : 0)}
-                focused={panes.focus() === 'editor'}
-                blocked={overlays.overlay()}
-                onFocus={() => panes.setFocus('editor')}
-                onToggleMode={settings.toggleDiffView}
-                staging={git.staging() && !comparison.active()}
-                onToggleStage={actions.gitToggleStageKey}
-                onClose={() => workspace.setPage(null)}
-              />
-            </box>
-          </Show>
-          {/* Above every page: it is a look at another file, and it lasts only
-              as long as the tree is being walked. */}
-          <Show when={preview.target()}>
-            {(target: () => PreviewTarget) => (
-              <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={65}>
-                <PreviewPane
-                  path={target().path}
-                  isDir={target().isDir}
-                  buffer={workspace.buffers[target().path]?.content}
-                  width={dimensions().width - (panes.sidebar() ? settings.treeWidth() + 1 : 0)}
-                  height={dimensions().height - 2}
-                  scroll={preview.scrollRequest()}
+            </Show>
+            <Show when={workspace.page() === 'lspStatus'}>
+              <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={60}>
+                <LspStatusView
+                  servers={serverList()}
+                  width={slotWidth()}
+                  focused={panes.focus() === 'editor'}
+                  blocked={overlays.overlay()}
                   onFocus={() => panes.setFocus('editor')}
+                  onRestart={actions.restartLsp}
+                  onUninstall={actions.uninstallServer}
+                  onClose={() => workspace.setPage(null)}
                 />
               </box>
-            )}
-          </Show>
-          <Show when={comparison.detailOpen()}>
-            <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={55}>
-              <ComparisonView
-                file={comparison.selectedFile()}
-                content={comparison.selectedContent()}
-                commit={comparison.selectedCommit()}
-                mode={config.diffView}
-                width={dimensions().width - (panes.sidebar() ? settings.treeWidth() + 1 : 0)}
-                focused={panes.focus() === 'editor'}
-                blocked={overlays.overlay()}
-                onFocus={() => panes.setFocus('editor')}
-                onMoveFile={comparison.moveDetail}
-                onToggleMode={settings.toggleDiffView}
-                onClose={closeComparisonDetail}
-              />
-            </box>
-          </Show>
-          {/* An Incoming/Outgoing commit from the panel — the comparison detail
+            </Show>
+            <Show when={workspace.page() === 'allChanges'}>
+              <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={60}>
+                <ChangesView
+                  sections={actions.allChanges()}
+                  meta={actions.allChangesMeta()}
+                  focusKey={rowSlotKey(git.cursorRow())}
+                  title={git.diffBase() ? `Against ${git.diffBase()}` : 'Uncommitted'}
+                  mode={config.diffView}
+                  width={slotWidth()}
+                  focused={panes.focus() === 'editor'}
+                  blocked={overlays.overlay()}
+                  onFocus={() => panes.setFocus('editor')}
+                  onToggleMode={settings.toggleDiffView}
+                  staging={git.staging() && !comparison.active()}
+                  onToggleStage={actions.gitToggleStageKey}
+                  onClose={() => workspace.setPage(null)}
+                />
+              </box>
+            </Show>
+            {/* Above every page: it is a look at another file, and it lasts only
+              as long as the tree is being walked. */}
+            <Show when={preview.target()}>
+              {(target: () => PreviewTarget) => (
+                <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={65}>
+                  <PreviewPane
+                    path={target().path}
+                    isDir={target().isDir}
+                    buffer={workspace.buffers[target().path]?.content}
+                    width={slotWidth()}
+                    height={slotHeight()}
+                    scroll={preview.scrollRequest()}
+                    onFocus={() => panes.setFocus('editor')}
+                  />
+                </box>
+              )}
+            </Show>
+            <Show when={comparison.detailOpen()}>
+              <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={55}>
+                <ComparisonView
+                  file={comparison.selectedFile()}
+                  content={comparison.selectedContent()}
+                  commit={comparison.selectedCommit()}
+                  mode={config.diffView}
+                  width={slotWidth()}
+                  focused={panes.focus() === 'editor'}
+                  blocked={overlays.overlay()}
+                  onFocus={() => panes.setFocus('editor')}
+                  onMoveFile={comparison.moveDetail}
+                  onToggleMode={settings.toggleDiffView}
+                  onClose={closeComparisonDetail}
+                />
+              </box>
+            </Show>
+            {/* An Incoming/Outgoing commit from the panel — the comparison detail
               page without a comparison, drawn by the same component. */}
-          <Show when={commitView.isOpen()}>
-            <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={55}>
-              <ComparisonView
-                file={commitView.file()}
-                content={commitView.content()}
-                commit={commitView.commit()}
-                mode={config.diffView}
-                width={dimensions().width - (panes.sidebar() ? settings.treeWidth() + 1 : 0)}
-                focused={panes.focus() === 'editor'}
-                blocked={overlays.overlay()}
-                onFocus={() => panes.setFocus('editor')}
-                onMoveFile={commitView.moveFile}
-                onToggleMode={settings.toggleDiffView}
-                onClose={commitView.close}
-              />
-            </box>
-          </Show>
+            <Show when={commitView.isOpen()}>
+              <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={55}>
+                <ComparisonView
+                  file={commitView.file()}
+                  content={commitView.content()}
+                  commit={commitView.commit()}
+                  mode={config.diffView}
+                  width={slotWidth()}
+                  focused={panes.focus() === 'editor'}
+                  blocked={overlays.overlay()}
+                  onFocus={() => panes.setFocus('editor')}
+                  onMoveFile={commitView.moveFile}
+                  onToggleMode={settings.toggleDiffView}
+                  onClose={commitView.close}
+                />
+              </box>
+            </Show>
+          </box>
         </box>
       </box>
       <StatusBar
