@@ -20,7 +20,13 @@ import { bindingProblem, formatChord, parseChord } from '../core/keybindings'
 import { MARKET_URL } from '../core/market'
 import { loadExtensions } from '../extensions'
 import type { ExtensionLoad } from '../extensions'
-import { iconThemeLabel, iconThemeNames, iconThemeNeedsFont, NO_ICONS } from '../icons'
+import {
+  iconThemeLabel,
+  iconThemeNames,
+  iconThemeNeedsFont,
+  NO_ICONS,
+  usableIconTheme,
+} from '../icons'
 import { invalidateSyntaxStyle } from '../languages/highlight'
 import { servers } from '../lsp/servers'
 import { paintedTheme, setTheme, setTransparency, themeLabel, themeNames } from '../themes'
@@ -101,7 +107,7 @@ export function createSettings(deps: {
    * previewing one without writing it to disk needs a layer of its own.
    */
   const [iconPreview, setIconPreview] = createSignal<string | null>(null)
-  const activeIconTheme = () => iconPreview() ?? config.iconTheme
+  const activeIconTheme = () => usableIconTheme(iconPreview() ?? config.iconTheme)
   const previewIcons = (id: string) => setIconPreview(id)
   const restoreIcons = () => setIconPreview(null)
 
@@ -232,16 +238,22 @@ export function createSettings(deps: {
     status.say(`Scroll past end ${onOff(config.scrollPastEnd)}`)
   }
 
+  /** What a chosen set says: off, its name, or the set standing in for it. */
+  const iconNotice = (id: string): string => {
+    if (id === NO_ICONS) return 'File icons off'
+    const drawn = usableIconTheme(id)
+    if (drawn !== id) {
+      return `File icons: ${iconThemeLabel(id)} — this terminal cannot draw it, using ${iconThemeLabel(drawn)}`
+    }
+    return `File icons: ${iconThemeLabel(id)}${iconThemeNeedsFont(id) ? ' — needs a patched font' : ''}`
+  }
+
   const applyIconTheme = (id: string) => {
     // Before the write, not after: the preview is what the tree is reading, and
     // leaving it up would keep showing the arrowed-past set over the saved one.
     restoreIcons()
     patchConfig({ iconTheme: id })
-    status.say(
-      config.iconTheme === NO_ICONS
-        ? 'File icons off'
-        : `File icons: ${iconThemeLabel(config.iconTheme)}${iconThemeNeedsFont(id) ? ' — needs a patched font' : ''}`,
-    )
+    status.say(iconNotice(config.iconTheme))
   }
 
   /**

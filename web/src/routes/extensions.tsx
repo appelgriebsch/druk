@@ -36,10 +36,20 @@ interface Extension {
   categories: string[]
 }
 
-// The eight `src/extensions/builtin.ts` compiles into the binary. Listed rather
+// The nine `src/extensions/builtin.ts` compiles into the binary. Listed rather
 // than derived: nothing in the catalog marks a manifest as preinstalled, and the
 // page would otherwise tell a first-run user to install what they already have.
-const BUILTIN = new Set(['typescript', 'json', 'markdown', 'html', 'css', 'yaml', 'toml', 'dotenv'])
+const BUILTIN = new Set([
+  'typescript',
+  'json',
+  'markdown',
+  'html',
+  'css',
+  'yaml',
+  'toml',
+  'dotenv',
+  'diff',
+])
 
 const EXTENSIONS = catalog.extensions as Extension[]
 

@@ -183,7 +183,13 @@ and `tsrx` both name `{"vendored": "tsx"}`.
 
 With no usable grammar, `patterns` is the whole answer — `{group, re, flags}` with
 the regex as a string, painted in order, later entries winning the characters they
-overlap. yaml, sql, svelte, hcl, ini, dotenv and liquid are all patterns.
+overlap. yaml, sql, svelte, hcl, ini, dotenv, diff and liquid are all patterns.
+
+A pattern may name a style the *editor* registers rather than one the theme does —
+`diff` paints its rows in `DIFF_GROUPS` (`src/languages/highlight.ts`), built from
+`gitAdded`/`gitDeleted`/`accent`. A `diff.plus` capture would have to be added to
+every theme extension before a patch coloured anywhere; the two colours a diff is
+read in are already in all of them.
 
 OpenTUI resolves most extensions, so a filetype it has never heard of claims its own
 with `extensions`, `filenames` or `filenamePattern` — `.tf`, `bun.lock`,

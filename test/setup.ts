@@ -27,6 +27,12 @@ process.env.XDG_CONFIG_HOME = tempDir('druk-test-config-')
 process.env.DRUK_PROGRESS = '0'
 
 /**
+ * Icons are what the test asserts on, not what the host's `TERM` and `LANG`
+ * happen to allow — a CI runner in the C locale would otherwise draw none.
+ */
+process.env.DRUK_ICON_FALLBACK = '0'
+
+/**
  * Same idea for the data home, which is where `src/lsp/install.ts` puts servers
  * druk installed. Without it a developer who once accepted an install would have
  * `installedCommand` answer for a real binary, and the suite would spawn it.

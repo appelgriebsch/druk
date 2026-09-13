@@ -207,6 +207,22 @@
       ]
     },
     {
+      "id": "diff",
+      "name": "Diff",
+      "version": "1.0.0",
+      "description": "Unified diffs and git patches — `.patch`, `.diff`, `.rej`, by patterns.",
+      "provides": {
+        "themes": [],
+        "icons": [],
+        "filetypes": [
+          "diff"
+        ]
+      },
+      "categories": [
+        "language"
+      ]
+    },
+    {
       "id": "dotenv",
       "name": "dotenv",
       "version": "1.0.0",

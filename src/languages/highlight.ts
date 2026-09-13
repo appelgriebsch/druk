@@ -145,6 +145,23 @@ export const CONFLICT_GROUPS = {
   marker: 'druk.conflict.marker',
 } as const
 
+/**
+ * A patch file's own rows, for the `diff` language's patterns.
+ *
+ * Here rather than in the themes because every theme already names the two
+ * colours a diff is read in (`gitAdded`/`gitDeleted`, what the tree and the diff
+ * view mark a change with) — a `diff.plus` capture group would have to be added
+ * to all twenty-odd theme extensions before a patch coloured anywhere. The tints
+ * are the diff view's own 0.14, so a `.patch` open in the editor and the same
+ * hunk in the diff view read alike.
+ */
+export const DIFF_GROUPS = {
+  added: 'druk.diff.added',
+  removed: 'druk.diff.removed',
+  hunk: 'druk.diff.hunk',
+  meta: 'druk.diff.meta',
+} as const
+
 /** Shared style table used by every editor buffer (built from the active theme). */
 export function getSyntaxStyle(): SyntaxStyle {
   // Keyed on the painted theme: every theme's `keyword` (etc.) reuses the same
@@ -189,6 +206,16 @@ export function getSyntaxStyle(): SyntaxStyle {
         bg: mixColors(ui.solidBg, ui.dirty, 0.18),
         bold: true,
       },
+      // A patch's rows carry both: the sign colour the diff view paints a change
+      // in, over the tint it fills that side with.
+      [DIFF_GROUPS.added]: { fg: ui.gitAdded, bg: mixColors(ui.solidBg, ui.gitAdded, 0.14) },
+      [DIFF_GROUPS.removed]: { fg: ui.gitDeleted, bg: mixColors(ui.solidBg, ui.gitDeleted, 0.14) },
+      // The hunk header is neither side — it is the line that says where you are.
+      [DIFF_GROUPS.hunk]: { fg: ui.accent, bg: mixColors(ui.solidBg, ui.accent, 0.12) },
+      // `diff --git`, `index`, `--- a/x`, `+++ b/x`: the file's name and nothing
+      // about its content, so they stay quiet and keep the `---`/`+++` rows from
+      // reading as a deletion and an addition of the path itself.
+      [DIFF_GROUPS.meta]: { fg: ui.dim, bold: true },
     })
     registerStruckThrough(syntaxStyle, DEPRECATED_GROUP)
   }

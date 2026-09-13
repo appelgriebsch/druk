@@ -206,3 +206,35 @@ export function iconFor(
   }
   return theme.file
 }
+
+/** Force the fallback on or off, for tests and a terminal guessed wrong. */
+export const ICON_FALLBACK_ENV = 'DRUK_ICON_FALLBACK'
+
+/** `TERM`s whose font is a fixed few hundred glyphs with no private-use area. */
+const CONSOLE_TERM = /^(dumb|linux|vt\d|ansi|xterm-mono)/
+
+/**
+ * The icon theme this terminal can actually draw.
+ *
+ * Not coverage detection — nothing can ask a terminal what its font holds. It
+ * is the two cases where the glyph provably cannot arrive: a console whose font
+ * is a fixed few hundred glyphs has no private-use area for a patched set to
+ * live in, and a locale that is not UTF-8 cannot carry even the geometric
+ * shapes `unicode` is built from. Everything else is left alone — guessing from
+ * the terminal's brand would take icons away from a machine that has the font.
+ *
+ * The config keeps the user's choice either way: the same `config.json` is read
+ * over SSH from a console and locally from a patched terminal, and rewriting it
+ * would cost the second one its icons.
+ */
+export function usableIconTheme(id: string, env: NodeJS.ProcessEnv = process.env): string {
+  const forced = env[ICON_FALLBACK_ENV]
+  if (forced === '0' || forced === 'off') return id
+  if (id === NO_ICONS) return id
+  const locale = env.LC_ALL ?? env.LC_CTYPE ?? env.LANG
+  // Unset is not the C locale here: a terminal that inherited no LANG still
+  // draws UTF-8, and downgrading on absence would cost icons everywhere.
+  if (locale && !/utf-?8/i.test(locale)) return NO_ICONS
+  const bare = forced === '1' || forced === 'on' || CONSOLE_TERM.test(env.TERM ?? '')
+  return bare && iconThemeNeedsFont(id) ? 'unicode' : id
+}

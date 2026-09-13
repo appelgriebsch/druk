@@ -1,0 +1,39 @@
+{
+  "id": "diff",
+  "name": "Diff",
+  "version": "1.0.0",
+  "description": "Unified diffs and git patches — `.patch`, `.diff`, `.rej`, by patterns.",
+  "languages": [
+    {
+      "id": "diff",
+      "patterns": [
+        {
+          "group": "druk.diff.removed",
+          "re": "^-.*",
+          "flags": "gm"
+        },
+        {
+          "group": "druk.diff.added",
+          "re": "^\\+.*",
+          "flags": "gm"
+        },
+        {
+          "group": "druk.diff.hunk",
+          "re": "^@@.*",
+          "flags": "gm"
+        },
+        {
+          "group": "druk.diff.meta",
+          "re": "^(?:diff --git |diff --cc |index |--- |\\+\\+\\+ |old mode |new mode |new file mode |deleted file mode |similarity index |dissimilarity index |rename from |rename to |copy from |copy to |Binary files |GIT binary patch).*",
+          "flags": "gm"
+        },
+        {
+          "group": "druk.diff.meta",
+          "re": "^\\\\ No newline at end of file.*",
+          "flags": "gm"
+        }
+      ],
+      "extensions": [".patch", ".diff", ".rej"]
+    }
+  ]
+}
