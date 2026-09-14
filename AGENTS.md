@@ -294,7 +294,10 @@ while `iconTheme` is read straight off it, so previewing one without writing it 
 disk needs `activeIconTheme`, the layer in `settings.ts` the tree reads instead,
 an unpainted
 background for a translucent terminal (`transparent` — editor, tab strip and
-sidebar only; floating panels stay painted or the editor reads through them),
+sidebar only; floating panels stay painted or the editor reads through them, and
+a modal draws no scrim at all — the dim is alpha compositing, and over a cell
+nothing painted it comes out opaque black, so every confirm and palette used to
+paint the whole see-through editor over),
 a settings page
 (palette → Settings) that edits and persists every option live, with a filterable
 value list per option, `/` to filter the rows themselves, and free-text fields for

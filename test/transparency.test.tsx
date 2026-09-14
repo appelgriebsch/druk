@@ -98,3 +98,21 @@ test('a theme switch keeps transparency on', async () => {
   expect(bgAlpha(t, 'const')).toBe(0)
   expect(THEMES.light.ui.bg).not.toBe('transparent')
 })
+
+test('a modal over a transparent editor leaves the editor unpainted', async () => {
+  // The scrim is alpha-composited, and there is nothing under an unpainted cell
+  // to compose with: drawn anyway it came out opaque black, so opening any modal
+  // painted the whole see-through editor over.
+  const t = await launch(fixture({ 'a.ts': 'const a = 1\n' }), { transparent: true })
+  await openFile(t, 'a.ts')
+  await openPalette(t)
+  expect(bgAlpha(t, 'EXPLORER')).toBe(0)
+
+  const painted = (t.captureSpans() as unknown as { lines: { spans: Span[] }[] }).lines
+    .flatMap(line => line.spans)
+    .filter(span => {
+      const bg = span.bg?.buffer
+      return bg?.['3'] === 255 && bg['0'] === 0 && bg['1'] === 0 && bg['2'] === 0
+    })
+  expect(painted).toEqual([])
+})

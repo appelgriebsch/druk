@@ -1,6 +1,7 @@
 import { RGBA } from '@opentui/core'
 import { useTerminalDimensions } from '@opentui/solid'
 import type { JSX } from '@opentui/solid'
+import { Show } from 'solid-js'
 
 import { ui } from '../themes'
 import { PAD } from './modal'
@@ -13,6 +14,10 @@ import { PAD } from './modal'
  *
  * Black at partial alpha rather than a theme colour, because it has to recede on a
  * light palette as well as a dark one.
+ *
+ * Not drawn at all with `transparent` on: blending needs something underneath, and
+ * an unpainted cell is nothing — the composite comes out opaque black, so opening
+ * any modal painted the whole see-through editor over in black.
  */
 const SCRIM = RGBA.fromValues(0, 0, 0, 0.45)
 
@@ -54,14 +59,16 @@ export function Overlay(props: {
       paddingTop={inset()}
       zIndex={props.zIndex ?? 100}
     >
-      <box
-        position="absolute"
-        top={0}
-        left={0}
-        width="100%"
-        height="100%"
-        backgroundColor={SCRIM}
-      />
+      <Show when={ui.bg !== 'transparent'}>
+        <box
+          position="absolute"
+          top={0}
+          left={0}
+          width="100%"
+          height="100%"
+          backgroundColor={SCRIM}
+        />
+      </Show>
       {props.children}
     </box>
   )
