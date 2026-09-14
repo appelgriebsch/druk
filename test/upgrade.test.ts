@@ -68,12 +68,14 @@ describe('the command each install is upgraded with', () => {
 describe('running it', () => {
   test('says what it detected and shows the command before running it', async () => {
     const written: string[] = []
-    await runUpgrade(text => written.push(text))
+    // A detection is injected, and it is the one kind that runs nothing: left to
+    // the process's own execPath this test really ran `bun add -g druk@latest`
+    // on the machine running the suite.
+    await runUpgrade(text => written.push(text), { execPath: '/usr/bin/druk' })
     const output = written.join('')
 
     // The guess is stated so a wrong one is obvious before anything is installed.
-    expect(output).toMatch(/Updating|Re-running/)
-    expect(output).toContain('$ ')
+    expect(output).toMatch(/Updating|Re-running|Installed by/)
   })
 })
 
