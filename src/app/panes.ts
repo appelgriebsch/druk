@@ -44,7 +44,6 @@ export function createPanes(tree: Tree, initialSidebar: boolean) {
     focusTree()
   }
 
-  /** VS Code's Ctrl+Shift+G / X / R: show that view, or put the tree back. */
   const toggleView = (next: Exclude<SidebarView, 'files'>) =>
     showView(sidebar() && view() === next ? 'files' : next)
 

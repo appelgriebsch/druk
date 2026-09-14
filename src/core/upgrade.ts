@@ -14,7 +14,6 @@ import { homedir } from 'node:os'
 
 export type InstallKind = 'brew' | 'script' | 'system' | 'package'
 
-/** Global-add line per manager — one string each, so nothing is guessed. */
 const ADD_GLOBAL = {
   npm: 'npm install -g druk@latest',
   pnpm: 'pnpm add -g druk@latest',

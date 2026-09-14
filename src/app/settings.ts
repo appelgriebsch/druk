@@ -59,6 +59,10 @@ const step = <T>(list: readonly T[], current: T, dir: 1 | -1): T =>
 
 const onOff = (value: boolean) => (value ? 'on' : 'off')
 
+type BoolKey = { [K in keyof Config]: Config[K] extends boolean ? K : never }[keyof Config]
+
+type RowSpec = Omit<SettingRow, 'local' | 'clear'> & { key: keyof Config }
+
 export function createSettings(deps: {
   /** The user's own settings — the whole `Config`, as its file holds it. */
   user: Config
@@ -151,6 +155,25 @@ export function createSettings(deps: {
 
   const configFile = () => (scope() === 'project' ? projectConfigFile(rootDir) : CONFIG_FILE)
 
+  // `notice` is given the *effective* value, which a project override may have
+  // kept where it was. The cast is the computed key: TypeScript widens
+  // `{ [key]: boolean }` to an index signature whatever `BoolKey` says.
+  const boolRow = (
+    section: string,
+    key: BoolKey,
+    label: string,
+    notice: (on: boolean) => string = on => `${label} ${onOff(on)}`,
+  ): RowSpec => ({
+    section,
+    key,
+    label,
+    value: onOff(view()[key]),
+    cycle: () => {
+      patchConfig({ [key]: !view()[key] } as Partial<Config>)
+      status.say(notice(config[key]))
+    },
+  })
+
   const toggleScope = () => setScope(current => (current === 'user' ? 'project' : 'user'))
 
   const clearOverride = (key: keyof Config, label: string) => {
@@ -209,31 +232,6 @@ export function createSettings(deps: {
     status.say(`Following OS appearance (${appearance})`)
   }
 
-  const toggleTransparent = () => {
-    patchConfig({ transparent: !view().transparent })
-    status.say(`Transparent background ${onOff(config.transparent)}`)
-  }
-
-  const toggleTooltips = () => {
-    patchConfig({ tooltips: !view().tooltips })
-    status.say(`Tooltips ${onOff(config.tooltips)}`)
-  }
-
-  const toggleTabIcons = () => {
-    patchConfig({ tabIcons: !view().tabIcons })
-    status.say(`File icons in tabs ${onOff(config.tabIcons)}`)
-  }
-
-  const toggleWrap = () => {
-    patchConfig({ wrap: !view().wrap })
-    status.say(`Word wrap ${onOff(config.wrap)}`)
-  }
-
-  const toggleScrollPastEnd = () => {
-    patchConfig({ scrollPastEnd: !view().scrollPastEnd })
-    status.say(`Scroll past end ${onOff(config.scrollPastEnd)}`)
-  }
-
   /** What a chosen set says: off, its name, or the set standing in for it. */
   const iconNotice = (id: string): string => {
     if (id === NO_ICONS) return 'File icons off'
@@ -277,11 +275,6 @@ export function createSettings(deps: {
     status.say(`Extension "${id}" ${off ? 'enabled' : 'disabled'}`)
   }
 
-  const toggleMarket = () => {
-    patchConfig({ extensionUpdates: !view().extensionUpdates })
-    status.say(`Extension market ${onOff(config.extensionUpdates)}`)
-  }
-
   /**
    * An empty value means druk's own market, not "no market": the setting is a
    * URL the fetch is built from, and there is no useful editor without one.
@@ -317,21 +310,6 @@ export function createSettings(deps: {
   const applyVim = (enabled: boolean) => {
     patchConfig({ vim: enabled })
     status.say(`Vim mode ${onOff(config.vim)}`)
-  }
-
-  const toggleTrim = () => {
-    patchConfig({ trimOnSave: !view().trimOnSave })
-    status.say(`Trim on save ${onOff(config.trimOnSave)}`)
-  }
-
-  const toggleFormatOnSave = () => {
-    patchConfig({ formatOnSave: !view().formatOnSave })
-    // Turning it on with nothing configured would silently do nothing on save.
-    status.say(
-      config.formatOnSave && Object.keys(config.formatters).length === 0
-        ? 'Format on save on — add a command on the Formatters row'
-        : `Format on save ${onOff(config.formatOnSave)}`,
-    )
   }
 
   /**
@@ -504,31 +482,6 @@ export function createSettings(deps: {
     status.say(`Changed files as ${config.gitPanelView === 'tree' ? 'a tree' : 'a flat list'}`)
   }
 
-  const toggleAutoSave = () => {
-    patchConfig({ autoSaveOnBlur: !view().autoSaveOnBlur })
-    status.say(`Auto-save ${onOff(config.autoSaveOnBlur)}`)
-  }
-
-  const toggleReviewInline = () => {
-    patchConfig({ reviewInline: !view().reviewInline })
-    status.say(`Inline review notes ${onOff(config.reviewInline)}`)
-  }
-
-  const toggleLsp = () => {
-    patchConfig({ lsp: !view().lsp })
-    status.say(`LSP diagnostics ${onOff(config.lsp)}`)
-  }
-
-  const toggleLspInline = () => {
-    patchConfig({ lspInline: !view().lspInline })
-    status.say(`Inline problem text ${onOff(config.lspInline)}`)
-  }
-
-  const toggleLspCompletion = () => {
-    patchConfig({ lspCompletion: !view().lspCompletion })
-    status.say(`Autocomplete ${onOff(config.lspCompletion)}`)
-  }
-
   /** The typed TypeScript location; empty hands the choice back to the server. */
   const applyTypescriptTsdk = (value: string) => {
     const tsdk = value.trim()
@@ -536,11 +489,6 @@ export function createSettings(deps: {
     status.say(
       tsdk ? `TypeScript: ${tsdk}` : "TypeScript: whichever the project's own server finds",
     )
-  }
-
-  const toggleLspAutoInstall = () => {
-    patchConfig({ lspAutoInstall: !view().lspAutoInstall })
-    status.say(`Offer to install servers ${onOff(config.lspAutoInstall)}`)
   }
 
   /**
@@ -563,16 +511,6 @@ export function createSettings(deps: {
     const enabled = override === undefined || override.length > 0
     const shown = override && override.length > 0 ? override : command
     return `${enabled ? '✓' : '✗'} ${id} — ${shown.join(' ')}`
-  }
-
-  const toggleDotfiles = () => {
-    patchConfig({ showDotfiles: !view().showDotfiles })
-    status.say(`Dotfiles ${config.showDotfiles ? 'shown' : 'hidden'}`)
-  }
-
-  const toggleGitignored = () => {
-    patchConfig({ respectGitignore: !view().respectGitignore })
-    status.say(`Git-ignored files ${config.respectGitignore ? 'hidden' : 'shown'}`)
   }
 
   /**
@@ -627,7 +565,6 @@ export function createSettings(deps: {
     applySidebarPosition(view().sidebarPosition === 'left' ? 'right' : 'left')
 
   /** The rows as this module declares them: what the page draws, plus the key it edits. */
-  type RowSpec = Omit<SettingRow, 'local' | 'clear'> & { key: keyof Config }
 
   /** The settings page's rows: current values plus their step actions, in display order. */
   const specs = (): RowSpec[] => [
@@ -677,13 +614,7 @@ export function createSettings(deps: {
         restore: restoreTheme,
       },
     },
-    {
-      section: 'Appearance',
-      key: 'transparent',
-      label: 'Transparent background',
-      value: onOff(view().transparent),
-      cycle: toggleTransparent,
-    },
+    boolRow('Appearance', 'transparent', 'Transparent background'),
     {
       section: 'Appearance',
       key: 'iconTheme',
@@ -695,20 +626,13 @@ export function createSettings(deps: {
         pick: at => applyIconTheme(iconList()[at]!),
       },
     },
-    {
-      section: 'Appearance',
-      key: 'tabIcons',
-      label: 'File icons in tabs',
-      value: onOff(view().tabIcons),
-      cycle: toggleTabIcons,
-    },
-    {
-      section: 'Appearance',
-      key: 'tooltips',
-      label: 'Hotkey tooltips (hold Ctrl for all)',
-      value: onOff(view().tooltips),
-      cycle: toggleTooltips,
-    },
+    boolRow('Appearance', 'tabIcons', 'File icons in tabs'),
+    boolRow(
+      'Appearance',
+      'tooltips',
+      'Hotkey tooltips (hold Ctrl for all)',
+      on => `Tooltips ${onOff(on)}`,
+    ),
     {
       section: 'Editor',
       key: 'vim',
@@ -734,20 +658,8 @@ export function createSettings(deps: {
         pick: at => applyCursorStyle(CURSOR_STYLES[at]!),
       },
     },
-    {
-      section: 'Editor',
-      key: 'wrap',
-      label: 'Word wrap',
-      value: onOff(view().wrap),
-      cycle: toggleWrap,
-    },
-    {
-      section: 'Editor',
-      key: 'scrollPastEnd',
-      label: 'Scroll past end',
-      value: onOff(view().scrollPastEnd),
-      cycle: toggleScrollPastEnd,
-    },
+    boolRow('Editor', 'wrap', 'Word wrap'),
+    boolRow('Editor', 'scrollPastEnd', 'Scroll past end'),
     {
       section: 'Editor',
       key: 'tabSize',
@@ -759,20 +671,18 @@ export function createSettings(deps: {
         pick: at => applyTabSize(TAB_SIZES[at]!),
       },
     },
-    {
-      section: 'Editor',
-      key: 'trimOnSave',
-      label: 'Trim trailing whitespace on save',
-      value: onOff(view().trimOnSave),
-      cycle: toggleTrim,
-    },
-    {
-      section: 'Editor',
-      key: 'formatOnSave',
-      label: 'Format on save',
-      value: onOff(view().formatOnSave),
-      cycle: toggleFormatOnSave,
-    },
+    boolRow(
+      'Editor',
+      'trimOnSave',
+      'Trim trailing whitespace on save',
+      on => `Trim on save ${onOff(on)}`,
+    ),
+    boolRow('Editor', 'formatOnSave', 'Format on save', on =>
+      // Turning it on with nothing configured would silently do nothing on save.
+      on && Object.keys(config.formatters).length === 0
+        ? 'Format on save on — add a command on the Formatters row'
+        : `Format on save ${onOff(on)}`,
+    ),
     {
       // Enter lists the configured entries plus an "add" row; picking one opens
       // a text field, since a command is no pick-a-value setting.
@@ -792,27 +702,19 @@ export function createSettings(deps: {
         pick: formatterEdit,
       },
     },
-    {
-      section: 'Editor',
-      key: 'autoSaveOnBlur',
-      label: 'Auto-save on focus change and terminal blur',
-      value: onOff(view().autoSaveOnBlur),
-      cycle: toggleAutoSave,
-    },
-    {
-      section: 'Files',
-      key: 'showDotfiles',
-      label: 'Show dotfiles',
-      value: onOff(view().showDotfiles),
-      cycle: toggleDotfiles,
-    },
-    {
-      section: 'Files',
-      key: 'respectGitignore',
-      label: 'Hide git-ignored files',
-      value: onOff(view().respectGitignore),
-      cycle: toggleGitignored,
-    },
+    boolRow(
+      'Editor',
+      'autoSaveOnBlur',
+      'Auto-save on focus change and terminal blur',
+      on => `Auto-save ${onOff(on)}`,
+    ),
+    boolRow('Files', 'showDotfiles', 'Show dotfiles', on => `Dotfiles ${on ? 'shown' : 'hidden'}`),
+    boolRow(
+      'Files',
+      'respectGitignore',
+      'Hide git-ignored files',
+      on => `Git-ignored files ${on ? 'hidden' : 'shown'}`,
+    ),
     {
       section: 'Files',
       key: 'sidebarWidth',
@@ -868,41 +770,11 @@ export function createSettings(deps: {
         pick: at => applyScanDepth(SCAN_DEPTHS[at]!),
       },
     },
-    {
-      section: 'Review',
-      key: 'reviewInline',
-      label: 'Inline review notes',
-      value: onOff(view().reviewInline),
-      cycle: toggleReviewInline,
-    },
-    {
-      section: 'Language servers',
-      key: 'lsp',
-      label: 'LSP diagnostics',
-      value: onOff(view().lsp),
-      cycle: toggleLsp,
-    },
-    {
-      section: 'Language servers',
-      key: 'lspInline',
-      label: 'Inline problem text',
-      value: onOff(view().lspInline),
-      cycle: toggleLspInline,
-    },
-    {
-      section: 'Language servers',
-      key: 'lspCompletion',
-      label: 'Autocomplete',
-      value: onOff(view().lspCompletion),
-      cycle: toggleLspCompletion,
-    },
-    {
-      section: 'Language servers',
-      key: 'lspAutoInstall',
-      label: 'Offer to install servers',
-      value: onOff(view().lspAutoInstall),
-      cycle: toggleLspAutoInstall,
-    },
+    boolRow('Review', 'reviewInline', 'Inline review notes'),
+    boolRow('Language servers', 'lsp', 'LSP diagnostics'),
+    boolRow('Language servers', 'lspInline', 'Inline problem text'),
+    boolRow('Language servers', 'lspCompletion', 'Autocomplete'),
+    boolRow('Language servers', 'lspAutoInstall', 'Offer to install servers'),
     {
       section: 'Language servers',
       key: 'typescriptTsdk',
@@ -977,11 +849,12 @@ export function createSettings(deps: {
       // The sidebar's extensions panel is where they are installed and turned
       // off; what is left here is the two that are settings — a switch and a
       // URL, neither of which belongs in a sidebar column.
-      section: 'Extensions',
-      key: 'extensionUpdates',
-      label: 'Check the market at startup',
-      value: onOff(view().extensionUpdates),
-      cycle: toggleMarket,
+      ...boolRow(
+        'Extensions',
+        'extensionUpdates',
+        'Check the market at startup',
+        on => `Extension market ${onOff(on)}`,
+      ),
     },
     {
       // Free text: a registry is a URL nobody would pick from a list, and the
@@ -1005,6 +878,12 @@ export function createSettings(deps: {
    * from each row: only the project file can be reset, and only while it is the
    * file on show — the user's own value is the base, with nothing underneath it.
    */
+
+  const cycleRow = (key: keyof Config) =>
+    specs()
+      .find(row => row.key === key)
+      ?.cycle?.(1)
+
   const rows = (): SettingRow[] =>
     specs().map(({ key, ...row }) => ({
       ...row,
@@ -1030,22 +909,11 @@ export function createSettings(deps: {
     previewTheme: paintTheme,
     restoreTheme,
     toggleThemeSync,
-    toggleTransparent,
-    toggleTabIcons,
-    toggleWrap,
+    toggleWrap: () => cycleRow('wrap'),
     applyTabSize,
     applyVim,
-    toggleTrim,
-    toggleFormatOnSave,
-    toggleAutoSave,
     toggleDiffView,
     toggleGitPanelView,
-    toggleDotfiles,
-    toggleGitignored,
-    toggleReviewInline,
-    toggleLsp,
-    toggleLspInline,
-    toggleLspCompletion,
     toggleServer,
     applyIconTheme,
     activeIconTheme,
@@ -1053,7 +921,6 @@ export function createSettings(deps: {
     restoreIcons,
     reloadExtensions,
     toggleExtension,
-    toggleMarket,
     applyRegistry,
     setFormatter,
     setServerCommand,
