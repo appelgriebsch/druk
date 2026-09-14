@@ -4,6 +4,7 @@ import { join } from 'node:path'
 
 import { fixture, launch, press, runCommand, settle, until } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 
 const ESC = String.fromCharCode(27)
 /** Ctrl+Opt+G as terminals spell it: an ESC prefix ahead of Ctrl+G (0x07). */
@@ -66,10 +67,7 @@ describe('the source-control panel collapses everything', () => {
   /** A repository whose changes sit two folders deep, so the panel nests them. */
   function repo() {
     const dir = fixture({ 'src/app/one.ts': 'before\n', 'src/ui/two.ts': 'before\n' })
-    git(dir, 'init', '-q')
-    git(dir, 'config', 'user.email', 'druk@test')
-    git(dir, 'config', 'user.name', 'druk')
-    git(dir, 'config', 'commit.gpgsign', 'false')
+    initRepo(dir)
     git(dir, 'add', '.')
     git(dir, 'commit', '-qm', 'init')
     writeFileSync(join(dir, 'src/app/one.ts'), 'after\n')

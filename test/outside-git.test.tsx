@@ -5,14 +5,13 @@ import { join } from 'node:path'
 
 import { watchTree } from '../src/core/fs'
 import { launch, untilFrame, untilGone } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 function repo() {
   const dir = tempDir('druk-outside-')
   const git = (...args: string[]) => execFileSync('git', args, { cwd: dir })
-  git('init', '-q', '-b', 'main')
-  git('config', 'user.email', 't@e.com')
-  git('config', 'user.name', 'T')
+  initRepo(dir)
   writeFileSync(join(dir, 'a.ts'), 'const a = 1\n')
   git('add', '.')
   git('commit', '-qm', 'init')

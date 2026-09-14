@@ -1,5 +1,4 @@
 import { describe, expect, test } from 'bun:test'
-import { execFileSync } from 'node:child_process'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -7,6 +6,7 @@ import { listDir } from '../src/core/fs'
 import { ignoredPaths } from '../src/core/git'
 import { listFiles, searchProject } from '../src/core/search'
 import { fixture, launch, toggleSetting } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 const PROJECT = { 'src/main.ts': 'const a = 1\n', '.DS_Store': 'junk\n', '.gitignore': 'dist\n' }
@@ -44,7 +44,7 @@ describe('showDotfiles: false', () => {
 describe('respectGitignore: true', () => {
   function repo() {
     const dir = tempDir('druk-ignored-')
-    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: dir })
+    initRepo(dir)
     writeFileSync(join(dir, '.gitignore'), 'dist\n*.log\n')
     writeFileSync(join(dir, 'a.ts'), 'const a = 1\n')
     writeFileSync(join(dir, 'debug.log'), 'noise\n')
@@ -100,7 +100,7 @@ describe('respectGitignore: true', () => {
 describe('project search and the fuzzy picker skip ignored files', () => {
   function repo() {
     const dir = tempDir('druk-searchignore-')
-    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: dir })
+    initRepo(dir)
     // Deliberately not `dist`: SKIPPED_DIRS drops that by name, which would pass
     // this test without gitignore being consulted at all.
     writeFileSync(join(dir, '.gitignore'), 'generated\n.worktrees\n')
@@ -136,7 +136,7 @@ describe('project search and the fuzzy picker skip ignored files', () => {
 describe('the VCS store is not project content', () => {
   function repo() {
     const dir = tempDir('druk-vcs-')
-    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: dir })
+    initRepo(dir)
     writeFileSync(join(dir, 'a.ts'), 'const a = 1\n')
     writeFileSync(join(dir, '.gitignore'), 'dist\n')
     return dir

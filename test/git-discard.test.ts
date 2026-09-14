@@ -4,15 +4,14 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { discardChange, discardTarget } from '../src/core/git'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 const git = (cwd: string, ...args: string[]) => execFileSync('git', args, { cwd, encoding: 'utf8' })
 
 function repo(files: Record<string, string> = { 'a.txt': 'base\n', 'other.txt': 'other\n' }) {
   const dir = tempDir('druk-discard-')
-  git(dir, 'init', '-q', '-b', 'main')
-  git(dir, 'config', 'user.email', 'druk@test')
-  git(dir, 'config', 'user.name', 'druk')
+  initRepo(dir)
   for (const [path, content] of Object.entries(files)) writeFileSync(join(dir, path), content)
   git(dir, 'add', '.')
   git(dir, 'commit', '-qm', 'init')
@@ -76,7 +75,7 @@ describe('discardChange', () => {
 
   test('handles an addition on an unborn branch without resolving HEAD', async () => {
     const dir = tempDir('druk-discard-unborn-')
-    git(dir, 'init', '-q', '-b', 'main')
+    initRepo(dir)
     writeFileSync(join(dir, '新 file.txt'), 'new\n')
     git(dir, 'add', '新 file.txt')
 

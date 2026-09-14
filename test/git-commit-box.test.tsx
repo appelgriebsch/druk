@@ -5,6 +5,7 @@ import { join } from 'node:path'
 
 import { fixture, launch, press, pressEscape, runCommand, settle, until } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 const ESC = String.fromCharCode(27)
@@ -16,10 +17,7 @@ const git = (cwd: string, ...args: string[]) => execFileSync('git', args, { cwd 
 /** A repository with one commit and one modified file, so the panel has a row. */
 function repo() {
   const dir = fixture({ 'a.ts': 'alpha\n', 'b.ts': 'beta\n' })
-  git(dir, 'init', '-q')
-  git(dir, 'config', 'user.email', 'druk@test')
-  git(dir, 'config', 'user.name', 'druk')
-  git(dir, 'config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   git(dir, 'add', '.')
   git(dir, 'commit', '-qm', 'init')
   writeFileSync(join(dir, 'a.ts'), 'alpha changed\n')

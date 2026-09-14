@@ -6,15 +6,14 @@ import { join } from 'node:path'
 import { listBranches } from '../src/core/git'
 import { fixture, launch, press, pressEscape, runCommand, settle } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 /** A repository with one commit on `main`, plus whatever extra branches. */
 function repo(...branches: string[]) {
   const dir = tempDir('druk-branch-')
   const git = (...args: string[]) => execFileSync('git', args, { cwd: dir })
-  git('init', '-q', '-b', 'main')
-  git('config', 'user.email', 'test@example.com')
-  git('config', 'user.name', 'Test')
+  initRepo(dir)
   writeFileSync(join(dir, 'a.ts'), 'one\n')
   git('add', '.')
   git('commit', '-q', '-m', 'init')

@@ -12,6 +12,7 @@ import { join } from 'node:path'
 
 import { statusMap } from '../src/core/git'
 import { launch, press, settle } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 /** Past the point where an unwindowed view exhausts the core's renderables. */
@@ -63,7 +64,7 @@ describe('git output size', () => {
     // repository with a lot of changed files. `statusMap` is the caller with the
     // largest output now that druk runs no diffs of its own.
     const dir = tempDir('druk-scale-status-')
-    execFileSync('git', ['init', '-q', '-b', 'main'], { cwd: dir })
+    initRepo(dir)
 
     // ~130 bytes of porcelain per entry, so this clears 1 MB comfortably.
     const name = (i: number) => `f${String(i).padStart(6, '0')}-${'n'.repeat(100)}.ts`

@@ -4,14 +4,13 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 import { fixture, launch, openFile, press, runCommand, settle, until } from './helpers'
+import { initRepo } from './repo'
 
 const git = (dir: string, ...args: string[]) => execFileSync('git', args, { cwd: dir })
 
 function repo() {
   const dir = fixture({ 'a.ts': 'alpha\n', 'folder/keep.ts': 'keep\n' })
-  git(dir, 'init', '-q', '-b', 'main')
-  git(dir, 'config', 'user.email', 'druk@test')
-  git(dir, 'config', 'user.name', 'druk')
+  initRepo(dir)
   git(dir, 'add', '.')
   git(dir, 'commit', '-qm', 'init')
   writeFileSync(join(dir, 'a.ts'), 'changed\n')

@@ -146,7 +146,7 @@ function stageCompiledRoot(): void {
     // Every embedded name, so the directory changes whenever any of the libraries
     // does: a new build never dlopens the previous build's library, and the 1.12.0
     // caches — which held the musl library under the glibc key — can never be hit.
-    const root = join(base, names.sort().join('+'))
+    const root = join(base, names.toSorted().join('+'))
     const dest = join(root, key, file)
     // Which of the candidates was staged is settled by the directory name, so the
     // size only has to say the file is whole; the rename below is what guarantees it.

@@ -5,6 +5,7 @@ import { join } from 'node:path'
 
 import { fixture, launch, openComparison, press, runCommand, untilFrame } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 /**
@@ -50,7 +51,7 @@ const rowsWith = (
 function repo() {
   const dir = tempDir('druk-long-')
   const git = (...args: string[]) => execFileSync('git', args, { cwd: dir })
-  git('init', '-q', '-b', 'main')
+  initRepo(dir)
   git('config', 'init.defaultBranch', 'main')
   git('config', 'user.email', 'test@example.com')
   git('config', 'user.name', 'Test')
@@ -78,7 +79,7 @@ test('the branch picker gives a long branch and its upstream one row each', asyn
   // fifty characters. The upstream is the trap — it is a branch name too, and
   // left whole it squeezed the name's box to nothing and wrapped it downward.
   expect(rowsWith(t, '49-tanstack')).toBe(2)
-  expect(t.captureCharFrame()).toContain('↑↓ move · Enter pick · Esc cancel')
+  expect(t.captureCharFrame()).toContain('↑↓ choose · Enter confirm · Esc cancel')
 }, 20000)
 
 test('the status bar keeps its hints beside a long branch', async () => {

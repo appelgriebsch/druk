@@ -16,14 +16,13 @@ import {
   untilGone,
 } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 function repo() {
   const dir = tempDir('druk-listeners-')
   const git = (...args: string[]) => execFileSync('git', args, { cwd: dir })
-  git('init', '-q', '-b', 'main')
-  git('config', 'user.email', 'test@example.com')
-  git('config', 'user.name', 'Test')
+  initRepo(dir)
   writeFileSync(join(dir, 'a.ts'), 'alpha\n')
   writeFileSync(join(dir, 'b.ts'), 'beta\n')
   git('add', '.')

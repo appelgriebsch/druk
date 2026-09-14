@@ -7,6 +7,7 @@ import { SIDEBAR_MIN } from '../src/core/config'
 import { ui } from '../src/themes'
 import { fixture, launch, openFile, press, pressEscape, runCommand, settle } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 const PROJECT = { 'alpha.ts': 'const a = 1\n', 'beta.ts': 'const b = 2\n' }
@@ -270,10 +271,7 @@ describe('what must not move when the sidebar does', () => {
   test('git marks line up at the panel edge, and follow it on a resize', async () => {
     const dir = tempDir('druk-marks-')
     const git = (...args: string[]) => execFileSync('git', args, { cwd: dir })
-    git('init', '-q', '-b', 'main')
-    git('config', 'user.email', 't@e.com')
-    git('config', 'user.name', 'T')
-    git('config', 'commit.gpgsign', 'false')
+    initRepo(dir)
     writeFileSync(join(dir, 'tracked.ts'), 'const a = 1\n')
     writeFileSync(join(dir, 'a-much-longer-name.ts'), 'const b = 2\n')
     git('add', '.')

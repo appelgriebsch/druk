@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { CONFLICT_GROUPS, getSyntaxStyle, styleIdForGroup } from '../src/languages/highlight'
 import { fixture, launch, openFile, press, pressTimes, runCommand, spansOf, until } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 const CONFLICTED = [
@@ -179,9 +180,7 @@ test('resolving one conflict leaves the other, and says how many are left', asyn
 test('a real merge conflict resolves from the panel through to a commit', async () => {
   const dir = tempDir('druk-merge-')
   const git = (...args: string[]) => execFileSync('git', args, { cwd: dir })
-  git('init', '-q', '-b', 'main')
-  git('config', 'user.email', 't@e.com')
-  git('config', 'user.name', 'T')
+  initRepo(dir)
   writeFileSync(join(dir, 'a.ts'), 'const b = 1\n')
   git('add', '.')
   git('commit', '-qm', 'init')

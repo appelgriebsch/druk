@@ -5,6 +5,7 @@ import { join } from 'node:path'
 
 import { fixture, launch, openPalette, press, runCommand, until } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 const PROJECT = { 'a.ts': 'const a = 1\n' }
@@ -13,9 +14,7 @@ const PROJECT = { 'a.ts': 'const a = 1\n' }
 function repo() {
   const dir = tempDir('druk-hints-')
   const git = (...args: string[]) => execFileSync('git', args, { cwd: dir })
-  git('init', '-q', '-b', 'main')
-  git('config', 'user.email', 't@e.com')
-  git('config', 'user.name', 'T')
+  initRepo(dir)
   writeFileSync(join(dir, 'a.ts'), 'const alpha = 1\n')
   git('add', '.')
   git('commit', '-qm', 'init')

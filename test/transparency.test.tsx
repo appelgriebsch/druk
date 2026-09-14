@@ -6,6 +6,7 @@ import { invalidateSyntaxStyle } from '../src/languages/highlight'
 import { setTheme, setTransparency, THEMES } from '../src/themes'
 import { fixture, launch, openDiff, openFile, openPalette, settle, toggleSetting } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 
 interface Span {
   text: string
@@ -77,10 +78,7 @@ test('the diff page stays painted — it is a layer over the editor', async () =
     const run = Bun.spawnSync(['git', ...args], { cwd: dir })
     if (run.exitCode !== 0) throw new Error(run.stderr.toString())
   }
-  git('init', '-q')
-  git('config', 'user.email', 'druk@test')
-  git('config', 'user.name', 'druk')
-  git('config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   git('add', '.')
   git('commit', '-qm', 'init')
   writeFileSync(join(dir, 'a.ts'), 'alpha changed\n')

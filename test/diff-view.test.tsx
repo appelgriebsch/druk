@@ -15,6 +15,7 @@ import {
   untilFrame,
   untilGone,
 } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 interface Span {
@@ -26,10 +27,7 @@ interface Span {
 function repo(files: Record<string, string>) {
   const dir = tempDir('druk-diff-')
   const git = (...args: string[]) => execFileSync('git', args, { cwd: dir })
-  git('init', '-q', '-b', 'main')
-  git('config', 'user.email', 'test@example.com')
-  git('config', 'user.name', 'Test')
-  git('config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   for (const [name, content] of Object.entries(files)) {
     writeFileSync(join(dir, name), content)
   }
@@ -343,10 +341,7 @@ test('the palette opens over the diff, and Ctrl+W closes the page', async () => 
 test('a long path is cut from the left so the file header stays on screen', async () => {
   const dir = tempDir('druk-diff-')
   const git = (...args: string[]) => execFileSync('git', args, { cwd: dir })
-  git('init', '-q', '-b', 'main')
-  git('config', 'user.email', 'test@example.com')
-  git('config', 'user.name', 'Test')
-  git('config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   const deep = 'a-very/deeply/nested/folder/structure/with-a-quite-long-file-name.test.tsx'
   mkdirSync(join(dir, deep, '..'), { recursive: true })
   writeFileSync(join(dir, deep), 'one\n')

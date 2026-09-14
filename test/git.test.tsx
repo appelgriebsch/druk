@@ -15,15 +15,14 @@ import {
 import { THEMES } from '../src/themes'
 import { launch, press, settle, until } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 /** A real repository with one committed file. */
 function repo(committed: string) {
   const dir = tempDir('druk-git-')
   const git = (...args: string[]) => execFileSync('git', args, { cwd: dir })
-  git('init', '-q', '-b', 'main')
-  git('config', 'user.email', 'test@example.com')
-  git('config', 'user.name', 'Test')
+  initRepo(dir)
   // Local gpgsign=true would fail every fixture commit — no test key is available.
   git('config', 'commit.gpgsign', 'false')
   writeFileSync(join(dir, 'a.ts'), committed)

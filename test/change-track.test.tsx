@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { ui } from '../src/themes'
 import { fixture, launch, openFile, press, settle } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 const SOURCE = `${Array.from({ length: 400 }, (_, index) => `const value${index} = ${index}`).join(
@@ -33,9 +34,7 @@ const track = (t: Harness) => {
 async function repoWith(edit: (lines: string[]) => void) {
   const dir = tempDir('druk-track-')
   const git = (...args: string[]) => execFileSync('git', args, { cwd: dir })
-  git('init', '-q', '-b', 'main')
-  git('config', 'user.email', 'test@example.com')
-  git('config', 'user.name', 'Test')
+  initRepo(dir)
   writeFileSync(join(dir, 'big.ts'), SOURCE)
   git('add', '.')
   git('commit', '-q', '-m', 'init')
@@ -94,9 +93,7 @@ describe('the track agrees with the scrollbar', () => {
   async function wrappedRepo(changeAt: number) {
     const dir = tempDir('druk-wrapped-')
     const git = (...args: string[]) => execFileSync('git', args, { cwd: dir })
-    git('init', '-q', '-b', 'main')
-    git('config', 'user.email', 'test@example.com')
-    git('config', 'user.name', 'Test')
+    initRepo(dir)
     writeFileSync(join(dir, 'big.ts'), WRAPPED)
     git('add', '.')
     git('commit', '-q', '-m', 'init')

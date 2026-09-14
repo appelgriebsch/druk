@@ -4,6 +4,7 @@ import { join } from 'node:path'
 
 import { fixture, launch, press, until, untilFrame } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 
 const ESC = String.fromCharCode(27)
 /** Ctrl+Opt+G as terminals spell it: an ESC prefix ahead of Ctrl+G (0x07). */
@@ -20,10 +21,7 @@ const porcelain = (dir: string) =>
 /** A repository with one commit, one modified file and one untracked file. */
 function repo() {
   const dir = fixture({ 'a.ts': 'alpha\n', 'b.ts': 'beta\n' })
-  git(dir, 'init', '-q')
-  git(dir, 'config', 'user.email', 'druk@test')
-  git(dir, 'config', 'user.name', 'druk')
-  git(dir, 'config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   git(dir, 'add', 'a.ts', 'b.ts')
   git(dir, 'commit', '-qm', 'init')
   writeFileSync(join(dir, 'a.ts'), 'alpha changed\n')

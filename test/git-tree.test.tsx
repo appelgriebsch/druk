@@ -12,6 +12,7 @@ import {
   untilFrame,
 } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 
 const git = (dir: string, ...args: string[]) => {
   const run = Bun.spawnSync(['git', ...args], { cwd: dir })
@@ -25,10 +26,7 @@ function repo() {
   mkdirSync(join(dir, 'src/ui'), { recursive: true })
   writeFileSync(join(dir, 'src/app/actions.ts'), 'actions\n')
   writeFileSync(join(dir, 'src/ui/panel.ts'), 'panel\n')
-  git(dir, 'init', '-q')
-  git(dir, 'config', 'user.email', 'druk@test')
-  git(dir, 'config', 'user.name', 'druk')
-  git(dir, 'config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   git(dir, 'add', '.')
   git(dir, 'commit', '-qm', 'init')
   writeFileSync(join(dir, 'root.ts'), 'ROOT\n')

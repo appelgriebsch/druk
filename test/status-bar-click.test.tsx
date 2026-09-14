@@ -5,6 +5,7 @@ import { join } from 'node:path'
 import { ui } from '../src/themes'
 import { fixture, launch, openFile, settle } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 
 interface Frame {
   lines: { spans: { text: string; bg?: { buffer: Uint8Array } }[] }[]
@@ -22,10 +23,7 @@ const git = (dir: string, ...args: string[]) => {
 
 function repo() {
   const dir = fixture({ 'a.ts': 'alpha\n' })
-  git(dir, 'init', '-q')
-  git(dir, 'config', 'user.email', 'druk@test')
-  git(dir, 'config', 'user.name', 'druk')
-  git(dir, 'config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   git(dir, 'add', '.')
   git(dir, 'commit', '-qm', 'init')
   writeFileSync(join(dir, 'a.ts'), 'alpha changed\n')

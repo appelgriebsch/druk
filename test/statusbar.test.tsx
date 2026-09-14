@@ -5,15 +5,14 @@ import { join } from 'node:path'
 
 import { fixture, launch, openFile, press, pressEscape, settle } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 /** A repo with one committed file, one edit and one untracked file. */
 function repo() {
   const dir = tempDir('druk-bar-')
   const git = (...args: string[]) => execFileSync('git', args, { cwd: dir })
-  git('init', '-q', '-b', 'main')
-  git('config', 'user.email', 't@e.com')
-  git('config', 'user.name', 'T')
+  initRepo(dir)
   writeFileSync(join(dir, 'a.ts'), 'const alpha = 1\n')
   git('add', '.')
   git('commit', '-qm', 'init')

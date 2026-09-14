@@ -4,6 +4,7 @@ import { join } from 'node:path'
 
 import { fixture, launch, press, pressEscape, runCommand, settle, untilFrame } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 
 const ESC = String.fromCharCode(27)
 /** Ctrl+Opt+G as terminals spell it: an ESC prefix ahead of Ctrl+G (0x07). */
@@ -17,10 +18,7 @@ const git = (dir: string, ...args: string[]) => {
 /** A repository with one commit and one modified file, so the panel has a row. */
 function repo() {
   const dir = fixture({ 'a.ts': 'alpha\n', 'b.ts': 'beta\n' })
-  git(dir, 'init', '-q')
-  git(dir, 'config', 'user.email', 'druk@test')
-  git(dir, 'config', 'user.name', 'druk')
-  git(dir, 'config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   git(dir, 'add', '.')
   git(dir, 'commit', '-qm', 'init')
   writeFileSync(join(dir, 'a.ts'), 'alpha changed\n')
@@ -164,10 +162,7 @@ test('plain Tab still hands the keyboard to the editor, from either view', async
 
 test('the panel draws file icons in the glyph column', async () => {
   const dir = fixture({ 'src/a.ts': 'alpha\n', 'notes.md': '# hi\n' })
-  git(dir, 'init', '-q')
-  git(dir, 'config', 'user.email', 'druk@test')
-  git(dir, 'config', 'user.name', 'druk')
-  git(dir, 'config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   git(dir, 'add', '.')
   git(dir, 'commit', '-qm', 'init')
   writeFileSync(join(dir, 'src/a.ts'), 'alpha changed\n')

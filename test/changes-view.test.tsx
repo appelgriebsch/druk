@@ -16,6 +16,7 @@ import {
   settle,
 } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 interface Frame {
@@ -48,10 +49,7 @@ const rowsWith = (t: Harness, text: string) =>
 function repo(files: Record<string, string>) {
   const dir = tempDir('druk-changes-')
   const git = (...args: string[]) => execFileSync('git', args, { cwd: dir })
-  git('init', '-q', '-b', 'main')
-  git('config', 'user.email', 'test@example.com')
-  git('config', 'user.name', 'Test')
-  git('config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   for (const [name, content] of Object.entries(files)) {
     writeFileSync(join(dir, name), content)
   }

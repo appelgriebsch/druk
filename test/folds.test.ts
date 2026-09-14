@@ -38,7 +38,7 @@ test('the per-line test agrees with the whole-file pass', () => {
   for (let line = 0; line < starts.length; line++) {
     if (foldsFrom(SAMPLE, starts, line, 2)) answered.add(line)
   }
-  expect([...answered].sort()).toEqual([...wanted].sort())
+  expect([...answered].toSorted()).toEqual([...wanted].toSorted())
 })
 
 test('the innermost region is the one a fold at the cursor takes', () => {

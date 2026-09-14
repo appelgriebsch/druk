@@ -13,6 +13,7 @@ import {
   untilGone,
 } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 
 const run = (dir: string, ...args: string[]) => {
   const result = Bun.spawnSync(['git', ...args], { cwd: dir })
@@ -22,10 +23,7 @@ const run = (dir: string, ...args: string[]) => {
 /** Two committed files, both changed since — the panel's cursor pages them. */
 function repo() {
   const dir = fixture({ 'a.ts': 'alpha\n', 'b.ts': 'beta\n' })
-  run(dir, 'init', '-q')
-  run(dir, 'config', 'user.email', 'druk@test')
-  run(dir, 'config', 'user.name', 'druk')
-  run(dir, 'config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   run(dir, 'add', '.')
   run(dir, 'commit', '-qm', 'init')
   writeFileSync(join(dir, 'a.ts'), 'alpha changed\n')
@@ -102,10 +100,7 @@ test('the diff closes itself once nothing is left to show', async () => {
  */
 function emptyPageRepo() {
   const dir = fixture({ 'a.ts': 'alpha\n', 'b.ts': 'beta\n' })
-  run(dir, 'init', '-q')
-  run(dir, 'config', 'user.email', 'druk@test')
-  run(dir, 'config', 'user.name', 'druk')
-  run(dir, 'config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   run(dir, 'add', '.')
   run(dir, 'commit', '-qm', 'init')
   writeFileSync(join(dir, 'a.ts'), 'alpha changed\n')

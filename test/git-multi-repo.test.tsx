@@ -14,6 +14,7 @@ import {
   untilFrame,
 } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 
 const git = (dir: string, ...args: string[]) => {
   const run = Bun.spawnSync(['git', ...args], { cwd: dir })
@@ -21,10 +22,7 @@ const git = (dir: string, ...args: string[]) => {
 }
 
 const init = (dir: string) => {
-  git(dir, 'init', '-q')
-  git(dir, 'config', 'user.email', 'druk@test')
-  git(dir, 'config', 'user.name', 'druk')
-  git(dir, 'config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   git(dir, 'add', '.')
   git(dir, 'commit', '-qm', 'init')
 }

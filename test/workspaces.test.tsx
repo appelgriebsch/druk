@@ -7,6 +7,7 @@ import { worktrees } from '../src/core/git'
 import { resolvedPath, workspaceEntries } from '../src/core/workspaces'
 import { fixture, launch, openFile, press, runCommand, settle, untilFrame } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 import { tempDir } from './temp'
 
 // Both inside one registered temp directory, or the checkout outlives the sweep.
@@ -16,10 +17,7 @@ function repoWithWorktree(branch: string) {
   const side = join(base, 'side')
   mkdirSync(main, { recursive: true })
   const git = (...args: string[]) => execFileSync('git', args, { cwd: main })
-  git('init', '-q', '-b', 'main')
-  git('config', 'user.email', 'test@example.com')
-  git('config', 'user.name', 'Test')
-  git('config', 'commit.gpgsign', 'false')
+  initRepo(main)
   writeFileSync(join(main, 'a.ts'), 'const a = 1\n')
   git('add', '.')
   git('commit', '-q', '-m', 'init')

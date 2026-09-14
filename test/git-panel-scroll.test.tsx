@@ -4,6 +4,7 @@ import { join } from 'node:path'
 
 import { fixture, launch, press, pressTimes, settle } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 
 const ESC = String.fromCharCode(27)
 /** Ctrl+Opt+G as terminals spell it: an ESC prefix ahead of Ctrl+G (0x07). */
@@ -19,10 +20,7 @@ const NAMES = Array.from({ length: 120 }, (_, index) => `f${String(index).padSta
 /** A repository where every file is modified, so the change list outruns the panel. */
 function repo() {
   const dir = fixture(Object.fromEntries(NAMES.map(name => [name, 'before\n'])))
-  git(dir, 'init', '-q')
-  git(dir, 'config', 'user.email', 'druk@test')
-  git(dir, 'config', 'user.name', 'druk')
-  git(dir, 'config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   git(dir, 'add', '.')
   git(dir, 'commit', '-qm', 'init')
   for (const name of NAMES) writeFileSync(join(dir, name), 'after\n')

@@ -5,6 +5,7 @@ import { join } from 'node:path'
 
 import { fixture, launch, press, until, untilFrame } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 
 const ESC = String.fromCharCode(27)
 /** Ctrl+Opt+G as terminals spell it: an ESC prefix ahead of Ctrl+G (0x07). */
@@ -15,10 +16,7 @@ const git = (cwd: string, ...args: string[]) => execFileSync('git', args, { cwd 
 /** A repository mid-merge: `a.ts` edited on both sides of the fork, left UU. */
 function conflicted() {
   const dir = fixture({ 'a.ts': 'shared\n', 'b.ts': 'beta\n' })
-  git(dir, 'init', '-q', '-b', 'main')
-  git(dir, 'config', 'user.email', 'druk@test')
-  git(dir, 'config', 'user.name', 'druk')
-  git(dir, 'config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   git(dir, 'add', '.')
   git(dir, 'commit', '-qm', 'init')
 

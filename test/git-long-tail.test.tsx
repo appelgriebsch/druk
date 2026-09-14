@@ -5,15 +5,13 @@ import { join } from 'node:path'
 
 import { fixture, launch, press, runCommand, until, untilFrame } from './helpers'
 import type { Harness } from './helpers'
+import { initRepo } from './repo'
 
 const git = (cwd: string, ...args: string[]) => execFileSync('git', args, { cwd })
 
 function repo() {
   const dir = fixture({ 'a.ts': 'alpha\n' })
-  git(dir, 'init', '-q', '-b', 'main')
-  git(dir, 'config', 'user.email', 'druk@test')
-  git(dir, 'config', 'user.name', 'druk')
-  git(dir, 'config', 'commit.gpgsign', 'false')
+  initRepo(dir)
   git(dir, 'add', '.')
   git(dir, 'commit', '-qm', 'init')
   return dir
