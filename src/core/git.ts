@@ -1014,27 +1014,53 @@ function hasIgnoredAncestor(cwd: string, path: string, ignored: Set<string>): bo
 }
 
 /**
- * The file's content at `ref`, or null when `ref` has no such file (untracked,
- * added, unborn branch, outside a repository). `cwd` anchors the lookup — the
- * `./` spelling makes the path cwd-relative, so a deleted file still resolves
- * even though it no longer exists on disk.
+ * The contents of several blobs in one subprocess, keyed by the spec asked for
+ * (`HEAD:./x`, `:./x` for the index) — null where the spec names no blob
+ * (untracked, added, unborn branch, outside a repository). `cwd` anchors the
+ * lookup: the `./` spelling makes the path cwd-relative, so a deleted file still
+ * resolves even though it no longer exists on disk.
+ *
+ * One `git show` per file is ~6ms of spawn, and the changes page asks for every
+ * changed file at once — forty of them froze the panel for a quarter of a second.
+ * `cat-file --batch` answers the lot from one process.
  */
-export function refText(cwd: string, relPath: string, ref = 'HEAD'): string | null {
-  const run = git(cwd, ['show', `${ref}:./${relPath}`], 3000)
-  // Normalized like every other text druk reads: the working-tree side of a diff
-  // comes from an open buffer, which is always LF, so a blob committed with CRLF
-  // would otherwise diff as every line changed.
-  return run.status === 0 ? decodeText(run.stdout).text : null
-}
-
-/**
- * The staged copy of a path — the index's own blob, which is neither HEAD's nor
- * the working tree's while a file is half-staged. `git show :./x` is how the
- * index is addressed; there is no ref name for it.
- */
-export function indexText(cwd: string, relPath: string): string | null {
-  const run = git(cwd, ['show', `:./${relPath}`], 3000)
-  return run.status === 0 ? decodeText(run.stdout).text : null
+export function blobTexts(cwd: string, specs: string[]): Map<string, string | null> {
+  const out = new Map<string, string | null>()
+  if (specs.length === 0) return out
+  // Buffers, not utf8: the batch header counts the contents in *bytes*, so a
+  // string would be sliced at the wrong place the moment a blob is not ASCII.
+  const run = spawnSync('git', ['cat-file', '--batch'], {
+    cwd,
+    timeout: 10_000,
+    maxBuffer: MAX_OUTPUT,
+    input: `${specs.join('\n')}\n`,
+  })
+  const stdout = run.status === 0 ? run.stdout : null
+  if (!stdout) {
+    for (const spec of specs) out.set(spec, null)
+    return out
+  }
+  let at = 0
+  for (const spec of specs) {
+    const nl = stdout.indexOf(10, at)
+    if (nl < 0) {
+      out.set(spec, null)
+      continue
+    }
+    const [, type, size] = stdout.toString('utf8', at, nl).split(' ')
+    at = nl + 1
+    const bytes = Number(size)
+    if (type !== 'blob' || !Number.isFinite(bytes)) {
+      out.set(spec, null)
+      continue
+    }
+    // Normalized like every other text druk reads: the working-tree side of a
+    // diff comes from an open buffer, which is always LF, so a blob committed
+    // with CRLF would otherwise diff as every line changed.
+    out.set(spec, decodeText(stdout.toString('utf8', at, at + bytes)).text)
+    at += bytes + 1 // the newline git writes after the contents
+  }
+  return out
 }
 
 export interface Upstream {

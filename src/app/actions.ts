@@ -9,10 +9,10 @@ import type { ConflictSide } from '../core/conflicts'
 import { readFile } from '../core/fs'
 import type { TreeNode } from '../core/fs'
 import {
+  blobTexts,
   discardTarget,
   fetchRemote,
   fileHistory,
-  indexText,
   lastCommitSubject,
   listRemotes,
   listTags,
@@ -20,7 +20,6 @@ import {
   pullAndPush,
   push,
   PUSH_REJECTED,
-  refText,
   stagedPaths,
   stagePaths,
   stashList,
@@ -104,6 +103,66 @@ export function createCommands(ctx: AppContext) {
   const DIFF_FILE_CACHE_LIMIT = 4
 
   /**
+   * The old sides of the changes page, keyed `<repo>\0<spec>`. A blob is
+   * whatever `revision` says it is, so the whole map goes when git moves — the
+   * same contract `diffFileCache` above is written against.
+   *
+   * `prefetchBlobs` is why this exists: the page's walk asks for every changed
+   * file at once, and one subprocess per file is what froze the panel for a
+   * quarter of a second on forty of them.
+   */
+  const blobs = new Map<string, string | null>()
+  let blobRevision = -1
+  /** ponytail: FIFO cap on whole file texts; a byte budget if a repo needs one. */
+  const BLOB_CACHE_LIMIT = 256
+  const blobKey = (repo: string, spec: string) => `${repo}\0${spec}`
+  const freshBlobs = () => {
+    const revision = git.revision()
+    if (revision === blobRevision) return
+    blobs.clear()
+    blobRevision = revision
+  }
+  const rememberBlobs = (repo: string, texts: Map<string, string | null>) => {
+    for (const [spec, text] of texts) blobs.set(blobKey(repo, spec), text)
+    while (blobs.size > BLOB_CACHE_LIMIT) blobs.delete(blobs.keys().next().value!)
+  }
+  const blobText = (repo: string, spec: string): string | null => {
+    freshBlobs()
+    const key = blobKey(repo, spec)
+    const hit = blobs.get(key)
+    if (hit !== undefined) return hit
+    rememberBlobs(repo, blobTexts(repo, [spec]))
+    return blobs.get(key) ?? null
+  }
+
+  /**
+   * Read every old side the coming walk will ask for, one subprocess per
+   * repository. The specs mirror `diffFileFor`'s below; a condition that drifts
+   * out of step costs a batched read and falls back to a single one, never an
+   * answer.
+   */
+  const prefetchBlobs = (changes: Change[]) => {
+    freshBlobs()
+    const ref = git.diffBase() ?? 'HEAD'
+    const wanted = new Map<string, Set<string>>()
+    for (const change of changes) {
+      if (change.status === 'untracked') continue
+      const repo = git.repoFor(change.path)
+      if (repo === null) continue
+      const rel = relative(repo, change.path)
+      const staged = git.statusEntries().get(change.path)?.staged != null
+      const specs = wanted.get(repo) ?? new Set<string>()
+      if (staged) specs.add(`:./${rel}`)
+      if (change.area === 'staged' || !staged) specs.add(`${ref}:./${rel}`)
+      wanted.set(repo, specs)
+    }
+    for (const [repo, specs] of wanted) {
+      const missing = [...specs].filter(spec => !blobs.has(blobKey(repo, spec)))
+      if (missing.length > 0) rememberBlobs(repo, blobTexts(repo, missing))
+    }
+  }
+
+  /**
    * Both texts of one file's diff. The new side prefers the open buffer over the
    * disk, so unsaved edits show — that is the diff the user is looking at. Null
    * for a file that cannot be read (binary), which the callers skip.
@@ -147,15 +206,15 @@ export function createCommands(ctx: AppContext) {
     const staged =
       repo === null || repoRel === null || !git.statusEntries().get(path)?.staged
         ? null
-        : indexText(repo, repoRel)
+        : blobText(repo, `:./${repoRel}`)
     const oldText =
       fileStatus === 'untracked' || repo === null || repoRel === null
         ? ''
         : area === 'staged'
-          ? (refText(repo, repoRel, base ?? 'HEAD') ?? '')
+          ? (blobText(repo, `${base ?? 'HEAD'}:./${repoRel}`) ?? '')
           : // Unstaged is measured from whatever `git diff` would measure it from:
             // the index when something is staged there, HEAD otherwise.
-            (staged ?? refText(repo, repoRel, base ?? 'HEAD') ?? '')
+            (staged ?? blobText(repo, `${base ?? 'HEAD'}:./${repoRel}`) ?? '')
     let newText = ''
     if (fileStatus !== 'deleted') {
       if (area === 'staged') {
@@ -204,6 +263,7 @@ export function createCommands(ctx: AppContext) {
     const ordered = (['merge', 'staged', 'unstaged'] as const).flatMap(area =>
       changes.filter(entry => entry.area === area),
     )
+    prefetchBlobs(ordered)
     const { sections, adds, dels, keep } = takeChangeSections(
       ordered,
       change => diffFileFor(change.path, change.status, change.area),
