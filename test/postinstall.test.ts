@@ -23,7 +23,14 @@ const recording = createServer((req, res) => {
   res.writeHead(404)
   res.end()
 })
-const servers = [silent, stalled, missing, recording]
+// A transient 504 — what GitHub's asset CDN serves under load — counted per hit.
+let flaky = 0
+const failing = createServer((_req, res) => {
+  flaky += 1
+  res.writeHead(504)
+  res.end()
+})
+const servers = [silent, stalled, missing, recording, failing]
 for (const server of servers) server.listen(0, '127.0.0.1')
 await Promise.all(servers.map(server => once(server, 'listening')))
 
@@ -83,6 +90,20 @@ describe('fetchBinary timeout', () => {
     expect(elapsed).toBeGreaterThanOrEqual(200)
     expect(elapsed).toBeLessThan(5_000)
   })
+
+  test('a transient 5xx is retried, a 404 is not', async () => {
+    const { fetchBinary } = await binaryAgainst(failing)
+    flaky = 0
+    expect(await fetchBinary({ timeout: 30_000 })).toBeNull()
+    expect(flaky).toBe(3)
+
+    // The missing-asset answer must stay one request: the baseline fallback reads it.
+    const { fetchBinary: probe } = await binaryAgainst(recording)
+    requested.length = 0
+    expect(await probe({ timeout: 30_000 })).toBeNull()
+    expect(requested.length).toBe(1)
+    requested.length = 0
+  }, 30_000)
 
   test('a server that answers is not held to the bound', async () => {
     // The 60s an install may spend waiting must not also be 60s of not installing.

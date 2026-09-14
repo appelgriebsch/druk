@@ -144,7 +144,7 @@ else
         url="https://github.com/$REPO/releases/latest/download/$filename"
         # `set -e` plus pipefail would abort on curl's own exit code here, printing its
         # error and none of ours; the guard keeps the failure ours to report.
-        latest=$(curl -fsSL "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null) || latest=""
+        latest=$(curl -fsSL --retry 2 "https://api.github.com/repos/$REPO/releases/latest" 2>/dev/null) || latest=""
         specific_version=$(printf '%s' "$latest" | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p' | head -1)
         if [ -z "$specific_version" ]; then
             echo -e "${RED}Could not find a published release of druk${NC}" >&2
@@ -173,9 +173,18 @@ else
     echo -e "${MUTED}Installing ${NC}druk $specific_version${MUTED} for $target${NC}"
     tmp_dir=$(mktemp -d)
     trap 'rm -rf "$tmp_dir"' EXIT
-    if ! curl -# -fL -o "$tmp_dir/$filename" "$url"; then
+    # curl sizes its progress bar with an ioctl on *stdin* — which is the installer
+    # script itself when this is run as `curl … | bash`, so it falls back to 79
+    # columns, and on a narrower terminal every frame wraps and lands on a line of
+    # its own instead of redrawing in place. Handing it the terminal is what gives
+    # it the real width; it reads nothing from stdin for this request.
+    curl_stdin=/dev/null
+    [ -t 1 ] && [ -e /dev/tty ] && curl_stdin=/dev/tty
+    # --retry covers the transient 502/504 that GitHub's asset CDN serves often
+    # enough for an install to fail on a release that is perfectly intact.
+    if ! curl -# -fL --retry 3 --retry-delay 1 -o "$tmp_dir/$filename" "$url" < "$curl_stdin"; then
         echo -e "${RED}Failed to download $filename${NC}" >&2
-        echo -e "${MUTED}Release v$specific_version may carry no binary for $target: $url${NC}" >&2
+        echo -e "${MUTED}Try again, or check that release v$specific_version carries $target: $url${NC}" >&2
         exit 1
     fi
 

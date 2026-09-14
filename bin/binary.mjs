@@ -103,11 +103,29 @@ export function findBinary() {
   return existsSync(local) ? local : null
 }
 
+/**
+ * GitHub's asset CDN answers a transient 502/504 often enough that one attempt
+ * fails installs on releases that are perfectly intact. Only 5xx and thrown
+ * errors are retried: a 404 is the missing-asset answer the baseline fallback
+ * reads, and retrying it would only slow every probe down.
+ */
+async function get(url, signal) {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const response = await fetch(url, { redirect: 'follow', signal })
+      if (response.status < 500 || attempt === 2) return response
+    } catch (error) {
+      if (attempt === 2 || signal?.aborted) throw error
+    }
+    await new Promise(resolve => setTimeout(resolve, 500 * (attempt + 1)))
+  }
+}
+
 /** Download and unpack one release asset into its own temp directory. */
 async function download(asset, signal) {
   const temp = join(tmpdir(), `druk-${version}-${asset}-${process.pid}`)
   try {
-    const response = await fetch(`${base}/${asset}`, { redirect: 'follow', signal })
+    const response = await get(`${base}/${asset}`, signal)
     if (!response.ok) return null
     mkdirSync(temp, { recursive: true })
     const archive = join(temp, asset)
