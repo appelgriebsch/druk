@@ -446,7 +446,7 @@ export function createCommands(ctx: AppContext) {
     // A jump inside the file already open changes no tab, so nothing else would
     // record where it started — and the way back is what the jump is half of.
     if (path === workspace.activeView()) ctx.navigation.mark()
-    workspace.setPage(null)
+    workspace.closePages()
     if (path !== workspace.activePath()) workspace.openFile(path)
     if (workspace.activePath() !== path) return
     editor.requestGoto(line, col)
@@ -487,7 +487,7 @@ export function createCommands(ctx: AppContext) {
   const showNote = () => {
     const target = ctx.review.targetOf()
     if (!target) return
-    workspace.setPage(null)
+    workspace.closePages()
     if (target.path !== workspace.activePath()) {
       // The source-control panel's pager keeps the keyboard for free: the changes
       // are a page, so it never goes near `openFile`. This one opens a real tab, and

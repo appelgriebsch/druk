@@ -3,7 +3,7 @@ import { execFileSync } from 'node:child_process'
 import { writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
-import { launch, press, pressEscape, until, untilFrame } from './helpers'
+import { launch, press, pressEscape, pressTimes, until, untilFrame } from './helpers'
 import type { Harness } from './helpers'
 import { tempDir } from './temp'
 
@@ -90,4 +90,22 @@ test('a sync heading folds its commits away and keeps the count', async () => {
   const shown = frame(t)
   expect(shown).toContain('Incoming')
   expect(shown).toContain('mine alone') // the other section is untouched
+})
+
+test('opening a file closes the commit page it would open behind', async () => {
+  const t = await launch(adrift())
+  await press(t, i => void i.pressKeys([TOGGLE]))
+  await untilFrame(t, 'from elsewhere')
+
+  await press(t, i => i.pressArrow('down'))
+  await press(t, i => i.pressEnter())
+  await untilFrame(t, 'const r = 1')
+
+  // Back to the file tree and into a file: the page is a layer over the editor
+  // slot, not a tab, so nothing else takes it down.
+  await pressTimes(t, 3, i => i.pressTab({ shift: true }))
+  await press(t, i => i.pressEnter())
+
+  await until(t, () => frame(t).includes('const a = 1'))
+  expect(frame(t)).not.toContain('const r = 1')
 })

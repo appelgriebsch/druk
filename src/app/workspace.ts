@@ -144,6 +144,17 @@ export function createWorkspace(deps: {
   /** The full-slot pages — settings, LSP status, all-changes — which cover the
    * editor slot. One at a time: each is a view of that slot. */
   const [page, setPage] = createSignal<'settings' | 'lspStatus' | 'allChanges' | null>(null)
+  /**
+   * The other editor-slot pages — the commit and comparison views — which live in
+   * controllers created after this one. Landing in a file has to close every layer
+   * over the slot, not just `page`, or the file opens behind one.
+   */
+  const pageClosers: (() => void)[] = []
+  const onClosePages = (close: () => void) => void pageClosers.push(close)
+  const closePages = () => {
+    setPage(null)
+    for (const close of pageClosers) close()
+  }
   /** A file that would not open, shown over the editor until the next keypress. */
   const [notice, setNotice] = createSignal<{ name: string; reason: string } | null>(null)
   const [conflict, setConflict] = createSignal<Conflict | null>(null)
@@ -188,7 +199,7 @@ export function createWorkspace(deps: {
 
   const openFile = (path: string, preview = false) => {
     setNotice(null)
-    setPage(null)
+    closePages()
     // An image gets a viewer tab and no buffer — the door stays shut to a
     // FileBuffer for anything that is not text, which is what keeps "never written
     // back" structural. The tab itself uses the same preview/pin/session logic.
@@ -1133,6 +1144,8 @@ export function createWorkspace(deps: {
     dirtyPaths,
     page,
     setPage,
+    onClosePages,
+    closePages,
     views,
     activeView,
     showView,

@@ -192,6 +192,12 @@ export function App(props: {
   const gitOp = createGitOp({ git, status, workspace })
   const branches = createBranches({ status, git, gitOp, prompts: promptState })
   const commitView = createCommitView({ status })
+  // Every layer over the editor slot gives way to a file opening in it; these two
+  // are built after the workspace, so they register rather than being called.
+  workspace.onClosePages(() => {
+    commitView.close()
+    comparison.closeDetail()
+  })
   const review = createReview({ rootDir, status, workspace })
   const promptHandlers = createPromptHandlers({
     renderer,
