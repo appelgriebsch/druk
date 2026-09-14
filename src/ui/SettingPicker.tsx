@@ -1,13 +1,12 @@
-import type { KeyEvent } from '@opentui/core'
 import { useTerminalDimensions } from '@opentui/solid'
 import { createEffect, createMemo, createSignal, For, onCleanup, Show } from 'solid-js'
 
 import { fuzzyScore } from '../core/search'
 import { ui } from '../themes'
+import { useListKeys } from './list'
 import { listRows, modalWidth, PAD } from './modal'
 import { ModalPanel } from './Overlay'
 import { TextInput } from './TextInput'
-import { useKeys } from './useKeys'
 
 /**
  * Fuzzy pick between a setting's values — the long lists (26 themes) that ←→
@@ -63,24 +62,15 @@ export function SettingPicker(props: {
   /** First row shown: slides so the selection stays inside the window. */
   const windowStart = () => Math.max(0, selected() - visibleRows() + 1)
 
-  useKeys((key: KeyEvent) => {
-    if (key.defaultPrevented) return
-    const k = key.name
-    const count = Math.max(1, matches().length)
-    if (k === 'up') {
-      key.preventDefault()
-      setIndex((selected() - 1 + count) % count)
-    } else if (k === 'down') {
-      key.preventDefault()
-      setIndex((selected() + 1) % count)
-    } else if (k === 'return' || k === 'enter') {
-      key.preventDefault()
+  useListKeys({
+    count: () => matches().length,
+    move: next => setIndex(next(selected())),
+    pick: () => {
       const match = matches()[selected()]
       if (match) props.onPick(match.at)
-    } else if (k === 'escape' || k === 'left') {
-      key.preventDefault()
-      props.onClose()
-    }
+    },
+    close: () => props.onClose(),
+    alsoClose: ['left'],
   })
 
   return (

@@ -147,6 +147,8 @@ export function useListKeys(handlers: {
   move: (next: (index: number) => number) => void
   pick: () => void
   close: () => void
+  /** Keys that close as well as Esc — `left` where the list is a step deeper. */
+  alsoClose?: string[]
 }) {
   useKeys((key: KeyEvent) => {
     const count = Math.max(1, handlers.count())
@@ -160,7 +162,7 @@ export function useListKeys(handlers: {
     } else if (key.name === 'return' || key.name === 'enter') {
       key.preventDefault()
       handlers.pick()
-    } else if (key.name === 'escape') {
+    } else if (key.name === 'escape' || handlers.alsoClose?.includes(key.name)) {
       key.preventDefault()
       handlers.close()
     }

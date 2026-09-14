@@ -9,7 +9,6 @@ import type { Match, SearchOptions } from '../core/search'
 import type { UpdateInfo } from '../core/update'
 import { shortenHome } from '../core/workspaces'
 import { SEVERITY_RANK } from '../lsp/protocol'
-import { BranchPicker } from '../ui/BranchPicker'
 import { ChoiceModal } from '../ui/ChoiceModal'
 import { CommandPalette } from '../ui/CommandPalette'
 import { CommitModal } from '../ui/CommitModal'
@@ -20,6 +19,7 @@ import { FilePicker } from '../ui/FilePicker'
 import { HelpOverlay } from '../ui/HelpOverlay'
 import { KeyPeek } from '../ui/KeyPeek'
 import { ListPicker } from '../ui/ListPicker'
+import type { PickerItem } from '../ui/ListPicker'
 import { ProblemsModal } from '../ui/ProblemsModal'
 import type { ProblemEntry } from '../ui/ProblemsModal'
 import { PromptModal } from '../ui/PromptModal'
@@ -39,6 +39,18 @@ import type { PromptState } from './prompts'
 import { KIND_CHOICES } from './review'
 import type { Confirmation, Conflict, Prompt } from './types'
 import type { Workspace } from './workspace'
+
+const branchItem = (branch: Branch): PickerItem => ({
+  id: branch.name,
+  label: branch.name,
+  note: branch.remote ? 'remote' : (branch.upstream ?? ''),
+  current: branch.current,
+})
+
+const pickBranch = (branches: Branch[], id: string, take: (branch: Branch) => void) => {
+  const branch = branches.find(entry => entry.name === id)
+  if (branch) take(branch)
+}
 
 type InstallServerPrompt = Extract<Prompt, { kind: 'installServer' }>
 type ReviewKindPrompt = Extract<Prompt, { kind: 'reviewKind' }>
@@ -543,20 +555,22 @@ export function OverlayStack(props: { ctx: AppContext; commands: Accessor<Comman
       </Show>
       <Show when={app.branches.pick()}>
         {(open: () => { branches: Branch[] }) => (
-          <BranchPicker
+          <ListPicker
             title={app.branches.pickTitle()}
-            branches={open().branches}
-            onPick={app.branches.choose}
+            placeholder="Type part of a branch name…"
+            items={open().branches.map(branchItem)}
+            onPick={id => pickBranch(open().branches, id, app.branches.choose)}
             onClose={() => app.branches.setPick(null)}
           />
         )}
       </Show>
       <Show when={app.comparison.basePick()}>
         {(branches: () => Branch[]) => (
-          <BranchPicker
+          <ListPicker
             title="Compare against branch"
-            branches={branches()}
-            onPick={app.comparison.chooseBase}
+            placeholder="Type part of a branch name…"
+            items={branches().map(branchItem)}
+            onPick={id => pickBranch(branches(), id, app.comparison.chooseBase)}
             onClose={app.comparison.closeBasePicker}
           />
         )}
