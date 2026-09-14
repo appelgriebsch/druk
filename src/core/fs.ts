@@ -396,23 +396,11 @@ export const createFile = (path: string): FsResult =>
 export const createDir = (path: string): FsResult =>
   taken(path) ?? attempt(() => void fs.mkdirSync(path, { recursive: true }))
 
-export const remove = (path: string): FsResult =>
-  attempt(() => fs.rmSync(path, { recursive: true, force: true }))
-
 export const rename = (from: string, to: string): FsResult =>
   taken(to) ??
   attempt(() => {
     fs.mkdirSync(dirname(to), { recursive: true })
     fs.renameSync(from, to)
-  })
-
-export const copy = (from: string, to: string): FsResult =>
-  taken(to) ??
-  attempt(() => {
-    fs.mkdirSync(dirname(to), { recursive: true })
-    // `errorOnExist` with `force: false` so a race that creates the destination
-    // between the check above and here fails loudly instead of overwriting it.
-    fs.cpSync(from, to, { recursive: true, force: false, errorOnExist: true })
   })
 
 /**

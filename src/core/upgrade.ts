@@ -7,14 +7,23 @@
  * look, and then neither copy is obviously the one that runs.
  *
  * So the install is identified from where the running executable sits, and the
- * package-manager case asks nypm for the right command rather than assuming npm.
+ * package-manager case spells that manager's own global-add line rather than
+ * assuming npm.
  */
 import { homedir } from 'node:os'
 
-import { addDependencyCommand } from 'nypm'
-import type { PackageManagerName } from 'nypm'
-
 export type InstallKind = 'brew' | 'script' | 'system' | 'package'
+
+/** Global-add line per manager — one string each, so nothing is guessed. */
+const ADD_GLOBAL = {
+  npm: 'npm install -g druk@latest',
+  pnpm: 'pnpm add -g druk@latest',
+  yarn: 'yarn global add druk@latest',
+  bun: 'bun add -g druk@latest',
+  deno: 'deno add -g npm:druk@latest',
+} as const
+
+export type PackageManagerName = keyof typeof ADD_GLOBAL
 
 export interface Install {
   kind: InstallKind
@@ -69,7 +78,7 @@ export function upgradeCommand(install: Install): string {
   // Not runnable: no repository is hosted, and the manager that installed it is
   // not ours to invoke. The URL is the honest answer.
   if (install.kind === 'system') return RELEASES_URL
-  return addDependencyCommand(install.manager ?? 'npm', 'druk@latest', { global: true })
+  return ADD_GLOBAL[install.manager ?? 'npm']
 }
 
 /** What was detected, said plainly, so a wrong guess is obvious before it runs. */

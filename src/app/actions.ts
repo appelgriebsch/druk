@@ -610,7 +610,7 @@ export function createCommands(ctx: AppContext) {
       tree.collapseAll()
     },
     gitCollapseAll,
-    toggleGitView: panes.toggleGitView,
+    toggleGitView: () => panes.toggleView('git'),
     /**
      * Quick look on or off. Turning it on shows the file tree and hands it the
      * keyboard: the preview follows that cursor, so from the editor there would
@@ -942,7 +942,7 @@ export function createCommands(ctx: AppContext) {
     gitRenameBranch: () => ctx.branches.open('rename'),
     gitDeleteBranch: () => ctx.branches.open('delete'),
     gitDeleteBranchForce: () => ctx.branches.open('deleteForce'),
-    openReview: panes.toggleReviewView,
+    openReview: () => panes.toggleView('review'),
     reviewNote: () =>
       noteTarget(target => ctx.prompts.setPrompt({ kind: 'reviewKind', ...target })),
     reviewNoteOf: (kind: NoteKind) =>
@@ -970,7 +970,7 @@ export function createCommands(ctx: AppContext) {
     reviewShow: showNote,
     reviewActivate: (row: number) => ctx.review.activate(row, openNote),
     reviewCollapseAll: ctx.review.collapseAll,
-    openExtensions: panes.toggleExtensionsView,
+    openExtensions: () => panes.toggleView('extensions'),
     reloadExtensions: ctx.extensions.reload,
     updateExtensions: ctx.extensions.updateAll,
     checkExtensionUpdates: ctx.extensions.checkNow,

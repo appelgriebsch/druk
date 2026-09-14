@@ -89,9 +89,9 @@ export function installKeyboard(ctx: AppContext, actions: CommandActions) {
     'editor.foldAll': () => actions.foldOp('foldAll'),
     'editor.unfoldAll': () => actions.foldOp('unfoldAll'),
     'view.sidebar': panes.toggleSidebar,
-    'view.git': panes.toggleGitView,
-    'view.review': panes.toggleReviewView,
-    'view.extensions': panes.toggleExtensionsView,
+    'view.git': () => panes.toggleView('git'),
+    'view.review': () => panes.toggleView('review'),
+    'view.extensions': () => panes.toggleView('extensions'),
     'review.note': actions.reviewNote,
     'view.collapse': actions.collapseSidebar,
     'view.markdown': workspace.toggleRendered,
@@ -311,7 +311,7 @@ export function installKeyboard(ctx: AppContext, actions: CommandActions) {
           extensions.reload()
           break
         case 'escape':
-          panes.toggleExtensionsView()
+          panes.toggleView('extensions')
           break
       }
       return
@@ -352,7 +352,7 @@ export function installKeyboard(ctx: AppContext, actions: CommandActions) {
           actions.reviewReply()
           break
         case 'escape':
-          panes.toggleReviewView()
+          panes.toggleView('review')
           break
       }
       return
@@ -483,7 +483,7 @@ export function installKeyboard(ctx: AppContext, actions: CommandActions) {
           // diff, so it goes first.
           if (commitView.isOpen()) commitView.close()
           else if (workspace.page() === 'allChanges') workspace.setPage(null)
-          else panes.toggleGitView()
+          else panes.toggleView('git')
           break
       }
       return

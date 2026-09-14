@@ -44,24 +44,9 @@ export function createPanes(tree: Tree, initialSidebar: boolean) {
     focusTree()
   }
 
-  /** Ctrl+Opt+G, as VS Code's Ctrl+Shift+G: show the panel, or put the tree back. */
-  const toggleGitView = () => {
-    if (sidebar() && view() === 'git') return showView('files')
-    showView('git')
-  }
-
-  /** Ctrl+Opt+X, as VS Code's Ctrl+Shift+X, and the same in-and-out as git's. */
-  const toggleExtensionsView = () => {
-    if (sidebar() && view() === 'extensions') return showView('files')
-    showView('extensions')
-  }
-
-  /** Ctrl+Opt+R: the review notes and the pull request's comments, in and out
-   * the way the other two views do it — it is a button in the strip like them. */
-  const toggleReviewView = () => {
-    if (sidebar() && view() === 'review') return showView('files')
-    showView('review')
-  }
+  /** VS Code's Ctrl+Shift+G / X / R: show that view, or put the tree back. */
+  const toggleView = (next: Exclude<SidebarView, 'files'>) =>
+    showView(sidebar() && view() === next ? 'files' : next)
 
   /** Which keymap is live, for the peek strip: the other views have keys of their
    * own and show under the tree's focus. */
@@ -78,9 +63,7 @@ export function createPanes(tree: Tree, initialSidebar: boolean) {
     toggleSidebar,
     view,
     showView,
-    toggleGitView,
-    toggleExtensionsView,
-    toggleReviewView,
+    toggleView,
     keyPane,
   }
 }

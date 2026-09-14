@@ -930,14 +930,6 @@ export async function statusEntriesAsync(
  * way `statusMap` needs for porcelain's repo-relative names — and no `keyBase`
  * call either, which would double the subprocesses this costs per refresh.
  */
-export function ignoredAmong(cwd: string, paths: string[]): Set<string> {
-  if (paths.length === 0) return new Set()
-  const split = splitBeyondSymlink(cwd, paths)
-  const run = git(cwd, ['check-ignore', '--stdin', '-z'], 5000, `${split.askable.join('\0')}\0`)
-  return readCheckIgnore(cwd, split, run.stdout, run.status)
-}
-
-/** `ignoredAmong` off the event loop, for the status refresh's cadence. */
 export async function ignoredAmongAsync(cwd: string, paths: string[]): Promise<Set<string>> {
   if (paths.length === 0) return new Set()
   const split = splitBeyondSymlink(cwd, paths)

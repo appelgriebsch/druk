@@ -8,7 +8,7 @@ import {
   diffLines,
   explain,
   failureLine,
-  ignoredAmong,
+  ignoredAmongAsync,
   KNOWN,
   statusMap,
 } from '../src/core/git'
@@ -271,7 +271,7 @@ test('a failure split across both streams is still recognised', () => {
   expect(explain(stderr)).toBe('could not write index')
 })
 
-test('ignoredAmong reports only the gitignored paths asked about', () => {
+test('ignoredAmong reports only the gitignored paths asked about', async () => {
   const dir = repo('one\n')
   writeFileSync(join(dir, '.gitignore'), 'dist\n*.log\n')
   mkdirSync(join(dir, 'dist'))
@@ -286,7 +286,7 @@ test('ignoredAmong reports only the gitignored paths asked about', () => {
     join(dir, 'keep.ts'),
     join(dir, 'a.ts'),
   ]
-  const ignored = ignoredAmong(dir, paths)
+  const ignored = await ignoredAmongAsync(dir, paths)
   expect(ignored.has(join(dir, 'dist'))).toBe(true)
   expect(ignored.has(join(dir, 'dist', 'out.js'))).toBe(true)
   expect(ignored.has(join(dir, 'noise.log'))).toBe(true)
@@ -294,7 +294,7 @@ test('ignoredAmong reports only the gitignored paths asked about', () => {
   expect(ignored.has(join(dir, 'a.ts'))).toBe(false)
 })
 
-test('one path beyond a symlink does not blank the whole answer', () => {
+test('one path beyond a symlink does not blank the whole answer', async () => {
   // `check-ignore` aborts the entire batch with 128 at the first path that reaches
   // through a symlinked directory — pnpm's node_modules/@scope/pkg is one — which
   // used to leave every other row undimmed the moment such a folder was expanded.
@@ -305,7 +305,7 @@ test('one path beyond a symlink does not blank the whole answer', () => {
   writeFileSync(join(dir, 'pkg', 'index.js'), 'x\n')
   symlinkSync(join(dir, 'pkg'), join(dir, 'node_modules', '@scope', 'pkg'))
 
-  const ignored = ignoredAmong(dir, [
+  const ignored = await ignoredAmongAsync(dir, [
     join(dir, 'node_modules'),
     join(dir, 'node_modules', '@scope'),
     join(dir, 'node_modules', '@scope', 'pkg'),
@@ -319,20 +319,20 @@ test('one path beyond a symlink does not blank the whole answer', () => {
   expect(ignored.has(join(dir, 'a.ts'))).toBe(false)
 })
 
-test('ignoredAmong is empty outside a repository', () => {
+test('ignoredAmong is empty outside a repository', async () => {
   // `check-ignore` exits 128 here rather than reporting nothing, and that has to
   // read as "nothing is ignored" — the tree still draws these rows.
   const dir = tempDir()
   writeFileSync(join(dir, 'a.ts'), 'x\n')
-  expect(ignoredAmong(dir, [join(dir, 'a.ts')]).size).toBe(0)
+  expect((await ignoredAmongAsync(dir, [join(dir, 'a.ts')])).size).toBe(0)
 })
 
-test('a tracked file is never ignored, whatever .gitignore says about it', () => {
+test('a tracked file is never ignored, whatever .gitignore says about it', async () => {
   // `git add -f` on a matching path is common enough (a committed lockfile under
   // a broad rule) that dimming it as ignored would be a plain lie.
   const dir = repo('one\n')
   writeFileSync(join(dir, '.gitignore'), '*.ts\n')
-  const ignored = ignoredAmong(dir, [join(dir, 'a.ts'), join(dir, '.gitignore')])
+  const ignored = await ignoredAmongAsync(dir, [join(dir, 'a.ts'), join(dir, '.gitignore')])
   expect(ignored.has(join(dir, 'a.ts'))).toBe(false)
 })
 
