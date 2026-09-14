@@ -110,6 +110,11 @@ export interface Config {
    * works everywhere.
    */
   tooltips: boolean
+  /**
+   * Name the terminal's window and tab after the open file. Off for a terminal
+   * whose own title is doing something else — a multiplexer's pane name, say.
+   */
+  terminalTitle: boolean
   vim: boolean
   /**
    * Shape of the caret. Ignored while `vim` is on, where the shape is how you tell
@@ -241,6 +246,7 @@ export const DEFAULTS: Config = {
   iconTheme: NO_ICONS,
   tabIcons: false,
   tooltips: true,
+  terminalTitle: true,
   vim: false,
   // OpenTUI's own default, so an unset key keeps the caret druk has always drawn.
   cursorStyle: 'block',
@@ -324,6 +330,7 @@ const VALIDATORS: { [K in keyof Config]: Validator<K> } = {
   iconTheme: raw => (isIconThemeName(raw) ? raw : undefined),
   tabIcons: bool,
   tooltips: bool,
+  terminalTitle: bool,
   vim: bool,
   cursorStyle: among(...CURSOR_STYLES),
   wrap: bool,

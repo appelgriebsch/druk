@@ -527,6 +527,11 @@ tabs from *disk* — and the folder left behind keeps its tabs, so switching bac
 where you were. The switch itself is a remount: `Root.tsx` keys `<App/>` on the
 workspace, since every controller is built from `rootDir` once, and the extensions,
 the project settings and the theme are reloaded for the new folder ahead of it),
+the terminal's own window and tab named after what is open
+(`terminalTitle`, on, settings → Appearance → Terminal title — `● App.tsx — druk — druk`,
+the project's name alone with no file up; `src/core/title.ts` writes OSC 0 and gives the
+shell's title back on exit with XTWINOPS push/pop rather than by guessing what it said,
+and writes nothing on a console whose parser prints an OSC string instead of eating it),
 and a startup update check.
 
 **Everything extensible is an extension now, and most of them live in `extensions/`.**

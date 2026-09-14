@@ -633,6 +633,7 @@ export function createSettings(deps: {
       'Hotkey tooltips (hold Ctrl for all)',
       on => `Tooltips ${onOff(on)}`,
     ),
+    boolRow('Appearance', 'terminalTitle', 'Terminal title'),
     {
       section: 'Editor',
       key: 'vim',

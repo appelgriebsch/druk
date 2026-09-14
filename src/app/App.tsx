@@ -12,6 +12,7 @@ import { isImagePath } from '../core/image'
 import { isMarkdownPath } from '../core/markdown'
 import { reportProgress } from '../core/progress'
 import { watchNotes } from '../core/review'
+import { formatTitle, restoreTerminalTitle, setTerminalTitle } from '../core/title'
 import { checkForUpdate, currentVersion } from '../core/update'
 import { extensionProblems } from '../extensions'
 import { iconFor } from '../icons'
@@ -110,6 +111,7 @@ export function App(props: {
   const renderer = useRenderer()
   const dimensions = useTerminalDimensions()
   const rootDir = props.rootDir
+  const projectName = basename(rootDir) || rootDir
   const single = props.openFile ?? null
 
   const restored = restoreWorkspace(rootDir, single)
@@ -294,6 +296,15 @@ export function App(props: {
   // boxes being drawn.
   useTooltipPeek()
   createEffect(() => setTooltipsEnabled(settings.config.tooltips))
+
+  // Turning the setting off has to put the shell's own title back, so the false
+  // branch restores rather than simply skipping.
+  createEffect(() => {
+    if (!settings.config.terminalTitle) return restoreTerminalTitle()
+    const path = workspace.activePath()
+    setTerminalTitle(formatTitle(projectName, path, Boolean(workspace.activeBuffer()?.dirty)))
+  })
+  onCleanup(() => restoreTerminalTitle())
 
   // `revision` covers saves, git commands and anything the watcher sees in .git;
   // `reloadKey` covers a buffer replaced from disk; `diffBase` covers the branch
@@ -660,7 +671,7 @@ export function App(props: {
             </Show>
             <Show when={panes.view() === 'files'}>
               <FileTree
-                rootName={basename(rootDir) || rootDir}
+                rootName={projectName}
                 nodes={tree.nodes()}
                 selectedPath={tree.selectedPath()}
                 expanded={tree.expanded()}
@@ -815,7 +826,7 @@ export function App(props: {
             <EditorPane
               path={workspace.activePath()}
               content={workspace.activeBuffer()?.content ?? ''}
-              rootName={basename(rootDir) || rootDir}
+              rootName={projectName}
               branch={git.branch()}
               version={currentVersion()}
               filetype={

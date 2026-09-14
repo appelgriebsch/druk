@@ -40,7 +40,8 @@ test('a tab indent is tinted by the renderer alone', async () => {
 })
 
 test('tab size is configurable and shown on the settings page', async () => {
-  const t = await launch(fixture({ 'a.ts': NESTED }), { tabSize: 4 })
+  // Tall, so the row is on the page without walking to it first.
+  const t = await launch(fixture({ 'a.ts': NESTED }), { tabSize: 4 }, { height: 40 })
   await runCommand(t, 'Settings')
   const row = () =>
     t

@@ -47,7 +47,8 @@ test('the palette opens the settings page over the editor slot', async () => {
 test('Enter flips a boolean, the row and the config file follow', async () => {
   const t = await launch(fixture(PROJECT))
   await runCommand(t, 'Settings')
-  await down(t, 8) // Theme, Follow OS, Light, Dark, Transparent, Icons, Tab icons, Tooltips → Vim mode
+  // Theme, Follow OS, Light, Dark, Transparent, Icons, Tab icons, Tooltips, Title → Vim mode
+  await down(t, 9)
   await press(t, i => i.pressEnter())
   const row = t
     .captureCharFrame()
@@ -63,7 +64,7 @@ test('Enter flips a boolean, the row and the config file follow', async () => {
 test('arrows cycle a multi-value setting in both directions', async () => {
   const t = await launch(fixture(PROJECT))
   await runCommand(t, 'Settings')
-  await down(t, 12) // Tab size
+  await down(t, 13) // Tab size
   const size = () =>
     t
       .captureCharFrame()
@@ -163,7 +164,7 @@ test('Esc backs out of the list to the page without changing anything', async ()
 test('booleans still flip on Enter without a list', async () => {
   const t = await launch(fixture(PROJECT))
   await runCommand(t, 'Settings')
-  await down(t, 8) // Vim mode
+  await down(t, 9) // Vim mode
   await press(t, i => i.pressEnter())
   expect(t.captureCharFrame()).not.toContain('Type to filter')
   expect(JSON.parse(readFileSync(CONFIG_FILE, 'utf8')).vim).toBe(true)
