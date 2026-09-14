@@ -39,6 +39,29 @@ import type { Conflict, DiskSync, FileBuffer, Prompt } from './types'
 export const CLASH_CHANGED = 'Changed on disk with unsaved edits: '
 export const CLASH_DELETED = 'Deleted on disk with unsaved edits: '
 
+/** The editor-slot pages, each a tab of its own — one per kind, never two. */
+export type PageKind = 'settings' | 'lspStatus' | 'allChanges' | 'commit' | 'compare'
+
+/**
+ * A page's tab id. Tabs are keyed by string and a file's key is its absolute
+ * path, so a scheme no path can carry is what keeps the two apart — every
+ * reader asks `pageKindOf` rather than guessing from the shape of the id.
+ */
+const PAGE_PREFIX = 'druk://'
+
+export const pageId = (kind: PageKind) => `${PAGE_PREFIX}${kind}`
+
+export const pageKindOf = (id: string): PageKind | null =>
+  id.startsWith(PAGE_PREFIX) ? (id.slice(PAGE_PREFIX.length) as PageKind) : null
+
+export const PAGE_TITLES: Record<PageKind, string> = {
+  settings: 'Settings',
+  lspStatus: 'Language servers',
+  allChanges: 'Changes',
+  commit: 'Commit',
+  compare: 'Comparison',
+}
+
 const unreadableReason = (e: unknown) =>
   e instanceof BinaryFileError
     ? 'It is binary, or uses an encoding druk cannot read.'
@@ -129,8 +152,28 @@ export function createWorkspace(deps: {
   const { config } = settings
 
   const [buffers, setBuffers] = createStore<Record<string, FileBuffer>>(restored.buffers)
-  const [tabs, setTabs] = createSignal<string[]>(restored.tabs)
-  const [activePath, setActivePath] = createSignal<string | null>(restored.activePath)
+  /** Every tab in strip order — files and pages alike. */
+  const [views, setViews] = createSignal<string[]>(restored.tabs)
+  const [activeView, setActiveView] = createSignal<string | null>(restored.activePath)
+  /** The file tabs alone: what the session persists and what the watcher walks. */
+  const tabs = () => views().filter(id => !pageKindOf(id))
+  /** The file tab last landed on — see `activePath`. */
+  const [lastFile, setLastFile] = createSignal<string | null>(restored.activePath)
+  /**
+   * The open *file*: what the editor holds. A page tab covers the editor slot
+   * rather than emptying it, so landing on one leaves the file underneath — and
+   * with it the cursor, the vim mode and the undo stack the editor is holding.
+   * Null once that file's own tab is gone.
+   */
+  // A memo, not a plain accessor: landing on a page tab re-evaluates this without
+  // changing it, and an `on(activePath)` effect re-runs on *dependencies* rather
+  // than on the value — the blur autosave would fire for a file nobody left.
+  const activePath = createMemo(() => {
+    const view = activeView()
+    if (view && !pageKindOf(view)) return view
+    const file = lastFile()
+    return file && views().includes(file) ? file : null
+  })
   // Preview tab (VS Code style): opened from the tree, reused by the next
   // preview, and promoted to a permanent tab on click, double-click or edit.
   const [previewPath, setPreviewPath] = createSignal<string | null>(null)
@@ -141,20 +184,20 @@ export function createWorkspace(deps: {
    * which of the two the editor slot is showing, nothing more.
    */
   const [renderedPaths, setRenderedPaths] = createSignal<string[]>([])
-  /** The full-slot pages — settings, LSP status, all-changes — which cover the
-   * editor slot. One at a time: each is a view of that slot. */
-  const [page, setPage] = createSignal<'settings' | 'lspStatus' | 'allChanges' | null>(null)
-  /**
-   * The other editor-slot pages — the commit and comparison views — which live in
-   * controllers created after this one. Landing in a file has to close every layer
-   * over the slot, not just `page`, or the file opens behind one.
-   */
-  const pageClosers: (() => void)[] = []
-  const onClosePages = (close: () => void) => void pageClosers.push(close)
-  const closePages = () => {
-    setPage(null)
-    for (const close of pageClosers) close()
+  /** The page the editor slot is showing, or null when a file (or nothing) is. */
+  const page = () => {
+    const view = activeView()
+    return view ? pageKindOf(view) : null
   }
+  /** Whether a page's tab is open, active or not — a page keeps its state while
+   * another tab is read, so what it shows has to keep being refreshed. */
+  const pageOpen = (kind: PageKind) => views().includes(pageId(kind))
+  /**
+   * State a page owns outside this controller (the commit and comparison views,
+   * built after it), torn down when its tab closes.
+   */
+  const pageClosers = new Map<PageKind, () => void>()
+  const onPageClose = (kind: PageKind, close: () => void) => void pageClosers.set(kind, close)
   /** A file that would not open, shown over the editor until the next keypress. */
   const [notice, setNotice] = createSignal<{ name: string; reason: string } | null>(null)
   const [conflict, setConflict] = createSignal<Conflict | null>(null)
@@ -199,7 +242,6 @@ export function createWorkspace(deps: {
 
   const openFile = (path: string, preview = false) => {
     setNotice(null)
-    closePages()
     // An image gets a viewer tab and no buffer — the door stays shut to a
     // FileBuffer for anything that is not text, which is what keeps "never written
     // back" structural. The tab itself uses the same preview/pin/session logic.
@@ -215,7 +257,7 @@ export function createWorkspace(deps: {
         return
       }
     }
-    setTabs(prev => {
+    setViews(prev => {
       if (prev.includes(path)) return prev
       // A preview tab takes the previous preview's slot instead of stacking up.
       const slot = previewPath() ? prev.indexOf(previewPath()!) : -1
@@ -231,7 +273,8 @@ export function createWorkspace(deps: {
     }
     tree.reveal(path)
     tree.setSelectedPath(path)
-    setActivePath(path)
+    setActiveView(path)
+    setLastFile(path)
     panes.setFocus('editor')
   }
 
@@ -253,18 +296,38 @@ export function createWorkspace(deps: {
     if (!discardUnsaved && buffers[path]?.dirty) {
       return setPrompt({ kind: 'closeDirty', paths: [path], names: [basename(path)] })
     }
-    const idx = tabs().indexOf(path)
-    const next = tabs().filter(p => p !== path)
-    setTabs(next)
-    if (activePath() === path) {
+    const idx = views().indexOf(path)
+    if (idx < 0) return
+    const next = views().filter(p => p !== path)
+    setViews(next)
+    if (activeView() === path) {
       const fallback = next[idx] ?? next[idx - 1] ?? null
-      setActivePath(fallback)
+      setActiveView(fallback)
       if (!fallback && panes.sidebar()) panes.focusTree()
     }
+    const kind = pageKindOf(path)
+    if (kind) return void pageClosers.get(kind)?.()
     if (previewPath() === path) setPreviewPath(null)
     setRenderedPaths(prev => prev.filter(p => p !== path))
     discardBuffer(path)
     setRecentlyClosed(prev => [...prev.filter(p => p !== path), path])
+  }
+
+  /**
+   * Put a page over the editor slot as a tab of its own. One tab per kind: the
+   * id *is* the kind, so asking twice for Settings lands on the tab already open.
+   */
+  const openPage = (kind: PageKind) => {
+    const id = pageId(kind)
+    setViews(prev => (prev.includes(id) ? prev : [...prev, id]))
+    setActiveView(id)
+  }
+
+  /** Close a page's tab — by default whichever one the slot is showing. */
+  const closePage = (kind?: PageKind) => {
+    const target = kind ?? page()
+    if (!target || !pageOpen(target)) return
+    closeTab(pageId(target), true)
   }
 
   const reopenTab = () => {
@@ -311,12 +374,14 @@ export function createWorkspace(deps: {
     say(rendered ? `Rendering ${basename(path)}` : `Source of ${basename(path)}`)
   }
 
-  /** Every tab in strip order — what Ctrl+←/→ walks. */
-  const views = () => tabs()
-
-  const activeView = () => activePath()
-
-  const showView = (id: string) => openFile(id)
+  /** Land on a tab the way a click on the strip does — a page keeps the keyboard
+   * where `openPage` leaves it, since the panels page their own views. */
+  const showView = (id: string) => {
+    const kind = pageKindOf(id)
+    if (!kind) return openFile(id)
+    openPage(kind)
+    panes.setFocus('editor')
+  }
 
   const closeView = (id: string) => closeTab(id)
 
@@ -1057,7 +1122,7 @@ export function createWorkspace(deps: {
   }
 
   const remapPaths = (remap: (path: string) => string) => {
-    setTabs(prev => prev.map(remap))
+    setViews(prev => prev.map(remap))
     // Snapshotted first: moving a buffer writes to the store being walked.
     for (const path of Object.keys(unwrap(buffers))) {
       const next = remap(path)
@@ -1068,8 +1133,10 @@ export function createWorkspace(deps: {
       clearFormatState(path)
       discardBuffer(path)
     }
-    const active = activePath()
-    if (active) setActivePath(remap(active))
+    const active = lastFile()
+    if (active) setLastFile(remap(active))
+    const view = activeView()
+    if (view) setActiveView(remap(view))
     const preview = previewPath()
     if (preview) setPreviewPath(remap(preview))
     setRenderedPaths(prev => prev.map(remap))
@@ -1143,9 +1210,10 @@ export function createWorkspace(deps: {
     activeBuffer,
     dirtyPaths,
     page,
-    setPage,
-    onClosePages,
-    closePages,
+    pageOpen,
+    openPage,
+    closePage,
+    onPageClose,
     views,
     activeView,
     showView,

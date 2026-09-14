@@ -164,9 +164,6 @@ export function createOverlays(deps: {
 
   const jumpTo = (match: Match) => {
     setSearch(null)
-    // A page gives way to anything that lands in a file — `openFile` closes it,
-    // but a match in the file already open never calls it.
-    workspace.closePages()
     if (match.path && match.path !== workspace.activePath()) workspace.openFile(match.path)
     editor.requestGoto(match.line, match.col)
     panes.setFocus('editor')
@@ -588,8 +585,6 @@ export function OverlayStack(props: { ctx: AppContext; commands: Accessor<Comman
           title={overlays.problemsOpen() === 'cursor' ? 'Problem at cursor' : 'Problems'}
           onPick={row => {
             overlays.setProblemsOpen(null)
-            // `openFile` closes the page, but a problem in the open file skips it.
-            workspace.closePages()
             if (row.path !== workspace.activePath()) workspace.openFile(row.path)
             editor.requestGoto(row.line, row.col)
             panes.setFocus('editor')

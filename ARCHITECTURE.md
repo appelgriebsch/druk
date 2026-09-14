@@ -629,6 +629,19 @@ is just a diff against the empty tree.
   early (a phantom buffer created there would hand the viewer file to the save path), and
   `syncFromDisk` closes vanished bufferless tabs in a separate pass, since its main walk
   iterates `buffers`.
+- **The editor-slot pages are tabs, and their ids are not paths.** Settings, the LSP
+  status page, the changes page, an opened commit and the comparison detail all sit in
+  `workspace.views()` as `druk://<kind>` (`pageId`/`pageKindOf`), so the strip, Ctrl+←/→,
+  Ctrl+W and the visit history need to know nothing about them. One kind is one tab.
+  Two consequences are load-bearing: `activePath()` keeps naming the file *under* the
+  page rather than going null — the editor holds its buffer, cursor, vim mode and undo
+  stack while a page covers it — and it is a `createMemo` for that reason, since an
+  `on(activePath)` effect re-runs on dependencies rather than on the value, and the blur
+  autosave would otherwise fire for a file nobody left. A page that owns state outside
+  the workspace (the commit and comparison views) is kept in step both ways from
+  `App.tsx`: `onPageClose` tears the view down when its tab closes, and an effect on the
+  view's own `isOpen` opens or closes the tab.
+
 - **The viewer paints cells, not renderables.** `ImageView` draws `▀` half-blocks
   (upper pixel foreground, lower background) straight into the frame from a `renderAfter`
   hook on one box. A `<text>` per cell would be cols×rows renderables — the Zig core

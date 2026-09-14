@@ -176,7 +176,7 @@ export function createCommands(ctx: AppContext) {
     // Oldest out first — the texts are the whole file twice over, so the cap is
     // what bounds a walk across many huge changes. The all-changes page is the
     // exception: it *is* that walk, and rebuildAllChanges prunes to the batch.
-    while (diffFileCache.size > DIFF_FILE_CACHE_LIMIT && workspace.page() !== 'allChanges') {
+    while (diffFileCache.size > DIFF_FILE_CACHE_LIMIT && !workspace.pageOpen('allChanges')) {
       diffFileCache.delete(diffFileCache.keys().next().value!)
     }
     return file
@@ -225,7 +225,7 @@ export function createCommands(ctx: AppContext) {
    */
   const showChanges = () => {
     // Page first so diffFileFor keeps the batch instead of pruning to four.
-    ctx.workspace.setPage('allChanges')
+    ctx.workspace.openPage('allChanges')
     rebuildAllChanges()
   }
 
@@ -395,8 +395,6 @@ export function createCommands(ctx: AppContext) {
   const openCommitRow = (oid: string) => {
     const repo = git.activeRepo()
     if (repo === null) return say(noRepository(git), 'warn')
-    // The page sits above this one; leaving it up would hide the commit.
-    workspace.setPage(null)
     ctx.commitView.open(repo, oid)
   }
 
@@ -446,7 +444,6 @@ export function createCommands(ctx: AppContext) {
     // A jump inside the file already open changes no tab, so nothing else would
     // record where it started — and the way back is what the jump is half of.
     if (path === workspace.activeView()) ctx.navigation.mark()
-    workspace.closePages()
     if (path !== workspace.activePath()) workspace.openFile(path)
     if (workspace.activePath() !== path) return
     editor.requestGoto(line, col)
@@ -487,7 +484,6 @@ export function createCommands(ctx: AppContext) {
   const showNote = () => {
     const target = ctx.review.targetOf()
     if (!target) return
-    workspace.closePages()
     if (target.path !== workspace.activePath()) {
       // The source-control panel's pager keeps the keyboard for free: the changes
       // are a page, so it never goes near `openFile`. This one opens a real tab, and
@@ -536,14 +532,14 @@ export function createCommands(ctx: AppContext) {
     openFile: () => ctx.overlays.setPicker('files'),
     switchTab: () => ctx.overlays.setPicker('tabs'),
     closeOthers: () => {
-      const keep = workspace.activePath()
+      const keep = workspace.activeView()
       if (keep)
         workspace.closeTabs(
-          workspace.tabs().filter(path => path !== keep),
+          workspace.views().filter(id => id !== keep),
           'Closed other tabs',
         )
     },
-    closeAll: () => workspace.closeTabs(workspace.tabs(), 'Closed all tabs'),
+    closeAll: () => workspace.closeTabs(workspace.views(), 'Closed all tabs'),
     gotoLine: () => ctx.prompts.setPrompt({ kind: 'gotoLine' }),
     undo: () => editor.requestHistory('undo'),
     redo: () => editor.requestHistory('redo'),
@@ -644,16 +640,16 @@ export function createCommands(ctx: AppContext) {
     openSettings: () => {
       settings.setScope('user')
       // One page at a time: the slot under the settings page is the editor's.
-      ctx.workspace.setPage('settings')
+      ctx.workspace.openPage('settings')
       panes.setFocus('editor')
     },
     openProjectSettings: () => {
       settings.setScope('project')
-      ctx.workspace.setPage('settings')
+      ctx.workspace.openPage('settings')
       panes.setFocus('editor')
     },
     lspStatus: () => {
-      ctx.workspace.setPage('lspStatus')
+      ctx.workspace.openPage('lspStatus')
       panes.setFocus('editor')
     },
     problemsList: () => {
@@ -786,13 +782,13 @@ export function createCommands(ctx: AppContext) {
      * palette command: `App` runs it whenever git or a buffer moves.
      */
     refreshChanges: () => {
-      if (workspace.page() !== 'allChanges') return
+      if (!workspace.pageOpen('allChanges')) return
       // Opening an empty page from the palette still explains itself; a
       // commit, stash or discard that cleared the last change should not
       // leave that message covering the editor.
       const had = allChangesMeta().total > 0
       rebuildAllChanges()
-      if (had && git.changes().length === 0) workspace.setPage(null)
+      if (had && git.changes().length === 0) workspace.closePage('allChanges')
     },
     /**
      * Point everything at another branch: the tree marks, the gutter, the

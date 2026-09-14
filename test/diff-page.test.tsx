@@ -33,7 +33,7 @@ function repo() {
 
 const tabRow = (t: Harness) => t.captureCharFrame().split('\n')[0]!
 
-test('the panel cursor opens the stacked page, and it is no tab of its own', async () => {
+test('the panel cursor opens the stacked page, under a tab of its own', async () => {
   const t = await launch(repo(), {}, { height: 40 })
   await openDiff(t)
   await untilFrame(t, '+ ALPHA')
@@ -41,10 +41,12 @@ test('the panel cursor opens the stacked page, and it is no tab of its own', asy
   const frame = t.captureCharFrame()
   // Every change at once, whichever row the cursor landed on.
   expect(frame).toContain('+ BETA')
+  // The page is a tab, and the files it lists are not tabs of their own.
+  expect(tabRow(t)).toContain('Changes')
   expect(tabRow(t)).not.toContain('a.ts')
 })
 
-test('opening a file from the tree closes the page — it is a layer, not a tab', async () => {
+test('opening a file from the tree shows it, and leaves the page on the strip', async () => {
   const t = await launch(repo(), {}, { height: 40 })
   await openDiff(t)
   await untilFrame(t, '+ ALPHA')
@@ -56,6 +58,7 @@ test('opening a file from the tree closes the page — it is a layer, not a tab'
   await press(t, i => i.pressEnter())
   await untilGone(t, '+ ALPHA')
   expect(t.captureCharFrame()).toContain('BETA') // the file the tree opened
+  expect(tabRow(t)).toContain('Changes') // …and the page is still a tab away
 })
 
 test('the page survives switching the sidebar back to the tree', async () => {
@@ -79,4 +82,5 @@ test('the settings page also gives way to a file being opened', async () => {
   const frame = t.captureCharFrame()
   expect(frame).toContain('BETA')
   expect(frame).not.toContain('Follow OS appearance')
+  expect(tabRow(t)).toContain('Settings')
 })

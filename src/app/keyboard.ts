@@ -21,7 +21,6 @@ export function installKeyboard(ctx: AppContext, actions: CommandActions) {
     prompts,
     overlays,
     git,
-    commitView,
     comparison,
     extensions,
     preview,
@@ -66,11 +65,8 @@ export function installKeyboard(ctx: AppContext, actions: CommandActions) {
     'file.copyPath': actions.copyPath,
     'file.copyRelativePath': actions.copyRelativePath,
     'tabs.close': () => {
-      // A page is the frontmost "tab": close it before any file tab.
-      if (workspace.page()) return workspace.setPage(null)
-      if (commitView.isOpen()) return commitView.close()
-      if (comparison.detailOpen()) return comparison.closeDetail()
-      if (workspace.activePath()) workspace.closeTab(workspace.activePath()!)
+      const view = workspace.activeView()
+      if (view) workspace.closeView(view)
     },
     'tabs.reopen': workspace.reopenTab,
     'tabs.switch': () => overlays.setPicker('tabs'),
@@ -186,11 +182,7 @@ export function installKeyboard(ctx: AppContext, actions: CommandActions) {
       // With a page up, Esc belongs to it (it closes the page) — moving
       // focus to the tree here would take the key away before it ever arrives.
       // Same when the completion menu is open: Esc dismisses it in EditorPane.
-      const pageUp =
-        workspace.page() !== null ||
-        commitView.isOpen() ||
-        comparison.detailOpen() ||
-        workspace.renderedPath() !== null
+      const pageUp = workspace.page() !== null || workspace.renderedPath() !== null
       if (
         k === 'escape' &&
         panes.sidebar() &&
@@ -477,13 +469,12 @@ export function installKeyboard(ctx: AppContext, actions: CommandActions) {
           panes.showView('review')
           break
         case 'escape':
-          // A page opened from this panel sits on top of it: Esc dismisses that
-          // first, or the panel would close and leave the page it opened behind,
-          // with no key here that closes it. The commit page draws over the
-          // diff, so it goes first.
-          if (commitView.isOpen()) commitView.close()
-          else if (workspace.page() === 'allChanges') workspace.setPage(null)
-          else panes.toggleView('git')
+          // A page opened from this panel covers the editor: Esc closes that
+          // first, or the panel would go and leave the page it opened behind,
+          // with no key here that closes it.
+          if (workspace.page() === 'commit' || workspace.page() === 'allChanges') {
+            workspace.closePage()
+          } else panes.toggleView('git')
           break
       }
       return

@@ -64,7 +64,14 @@ import { createReview } from './review'
 import { createSettings } from './settings'
 import { createStatus, READY } from './status'
 import { createTree, hiddenNodes } from './tree'
-import { CLASH_CHANGED, CLASH_DELETED, createWorkspace, restoreWorkspace } from './workspace'
+import {
+  CLASH_CHANGED,
+  CLASH_DELETED,
+  createWorkspace,
+  PAGE_TITLES,
+  pageKindOf,
+  restoreWorkspace,
+} from './workspace'
 import { createWorkspaces } from './workspaces'
 
 /** The divider draws its own left edge; a box border is how it spans the height.
@@ -194,12 +201,21 @@ export function App(props: {
   const gitOp = createGitOp({ git, status, workspace })
   const branches = createBranches({ status, git, gitOp, prompts: promptState })
   const commitView = createCommitView({ status })
-  // Every layer over the editor slot gives way to a file opening in it; these two
-  // are built after the workspace, so they register rather than being called.
-  workspace.onClosePages(() => {
-    commitView.close()
-    comparison.closeDetail()
-  })
+  // These two pages own their state outside the workspace, so their tab and that
+  // state are kept in step from here: closing the tab tears the view down, and a
+  // view that closes itself (a comparison ending, say) takes its tab with it.
+  workspace.onPageClose('commit', commitView.close)
+  workspace.onPageClose('compare', comparison.closeDetail)
+  createEffect(
+    on(commitView.isOpen, open =>
+      open ? workspace.openPage('commit') : workspace.closePage('commit'),
+    ),
+  )
+  createEffect(
+    on(comparison.detailOpen, open =>
+      open ? workspace.openPage('compare') : workspace.closePage('compare'),
+    ),
+  )
   const review = createReview({ rootDir, status, workspace })
   const promptHandlers = createPromptHandlers({
     renderer,
@@ -244,8 +260,6 @@ export function App(props: {
    */
   const editorCovered = () =>
     workspace.page() !== null ||
-    comparison.detailOpen() ||
-    commitView.isOpen() ||
     activeImage() !== null ||
     workspace.renderedPath() !== null ||
     preview.target() !== null
@@ -683,9 +697,6 @@ export function App(props: {
                 markedPaths={tree.marked()}
                 iconTheme={settings.activeIconTheme()}
                 onActivate={node => {
-                  // Landing in a file is how a page closes — the tree stays
-                  // interactive while one is up, like any other editor page.
-                  workspace.setPage(null)
                   // Opening a file is the end of browsing; leaving the mode on
                   // would put the preview back over it on the way to the tree.
                   preview.close()
@@ -793,21 +804,28 @@ export function App(props: {
         <box flexGrow={1} flexDirection="column">
           <Tabs
             width={slotWidth()}
-            tabs={workspace.views().map(id => ({
-              id,
-              // A markdown tab reading as the rendered document is still the one
-              // tab, so it is the same name with a mark rather than a second entry.
-              name: id === workspace.renderedPath() ? `¶ ${basename(id)}` : basename(id),
-              dirty: workspace.buffers[id]?.dirty ?? false,
-              preview: id === workspace.previewPath(),
-              severity: tabSeverity(id),
-              // A rendered-markdown tab spends the glyph slot on the mark that says
-              // which it is; only a plain file tab has it to spare.
-              icon:
-                config.tabIcons && id !== workspace.renderedPath()
-                  ? iconFor(settings.activeIconTheme(), { name: basename(id), isDir: false })
-                  : null,
-            }))}
+            tabs={workspace.views().map(id => {
+              const kind = pageKindOf(id)
+              return {
+                id,
+                // A markdown tab reading as the rendered document is still the one
+                // tab, so it is the same name with a mark rather than a second entry.
+                name: kind
+                  ? PAGE_TITLES[kind]
+                  : id === workspace.renderedPath()
+                    ? `¶ ${basename(id)}`
+                    : basename(id),
+                dirty: workspace.buffers[id]?.dirty ?? false,
+                preview: id === workspace.previewPath(),
+                severity: kind ? null : tabSeverity(id),
+                // A rendered-markdown tab spends the glyph slot on the mark that says
+                // which it is; only a plain file tab has it to spare.
+                icon:
+                  config.tabIcons && !kind && id !== workspace.renderedPath()
+                    ? iconFor(settings.activeIconTheme(), { name: basename(id), isDir: false })
+                    : null,
+              }
+            })}
             activeId={workspace.activeView()}
             canBack={navigation.canBack()}
             canForward={navigation.canForward()}
@@ -928,7 +946,7 @@ export function App(props: {
                   focused={panes.focus() === 'editor'}
                   blocked={overlays.overlay()}
                   onFocus={() => panes.setFocus('editor')}
-                  onClose={() => workspace.setPage(null)}
+                  onClose={() => workspace.closePage()}
                 />
               </box>
             </Show>
@@ -942,7 +960,7 @@ export function App(props: {
                   onFocus={() => panes.setFocus('editor')}
                   onRestart={actions.restartLsp}
                   onUninstall={actions.uninstallServer}
-                  onClose={() => workspace.setPage(null)}
+                  onClose={() => workspace.closePage()}
                 />
               </box>
             </Show>
@@ -961,7 +979,7 @@ export function App(props: {
                   onToggleMode={settings.toggleDiffView}
                   staging={git.staging() && !comparison.active()}
                   onToggleStage={actions.gitToggleStageKey}
-                  onClose={() => workspace.setPage(null)}
+                  onClose={() => workspace.closePage()}
                 />
               </box>
             </Show>
@@ -982,7 +1000,7 @@ export function App(props: {
                 </box>
               )}
             </Show>
-            <Show when={comparison.detailOpen()}>
+            <Show when={workspace.page() === 'compare'}>
               <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={55}>
                 <ComparisonView
                   file={comparison.selectedFile()}
@@ -1001,7 +1019,7 @@ export function App(props: {
             </Show>
             {/* An Incoming/Outgoing commit from the panel — the comparison detail
               page without a comparison, drawn by the same component. */}
-            <Show when={commitView.isOpen()}>
+            <Show when={workspace.page() === 'commit'}>
               <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={55}>
                 <ComparisonView
                   file={commitView.file()}

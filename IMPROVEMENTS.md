@@ -160,8 +160,9 @@ Finish with tests (tab click / `showView` / pageRows) and land as the next small
 
 - **Settings page owns config; palette owns features** — themes left in palette for
   arrow-through live preview is the right exception
-- **Page slot model** — settings, diff, and image share the editor slot; `Ctrl+W` / Esc
-  close the frontmost page; mutual exclusion when opening one
+- **Pages are tabs** — settings, the changes page, an opened commit and the comparison
+  detail sit in the tab strip as `druk://<kind>` ids, one tab per kind, closed with `×`,
+  `Ctrl+W` or Esc; the file under a page keeps its buffer, cursor and undo stack
 - **`hiddenNodes` + `flattenVisible(hidden)`** — prune at directory boundary; matches
   `git ls-files --directory`
 - **`failureLine`** — status bar shows the signal, not git’s advice dump

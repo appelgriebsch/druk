@@ -4,10 +4,11 @@ import { exists } from '../core/fs'
 import type { EditorBridge } from './editor'
 import type { Panes } from './panes'
 import type { Status } from './status'
+import { pageKindOf } from './workspace'
 import type { Workspace } from './workspace'
 
 interface Stop {
-  /** A view id — a file path, or the diff tab's own id. */
+  /** A view id — a file path, or a page tab's own id. */
   id: string
   line: number
   col: number
@@ -35,8 +36,10 @@ export function createNavigation(deps: {
 
   const current = () => stops()[at()]
 
-  /** A stop still worth going to: its file is still on disk. */
-  const alive = (stop: Stop) => exists(stop.id)
+  /** A stop still worth going to: its file is still on disk, or — for a page —
+   * its tab is still open. A page nothing holds any more would come back empty. */
+  const alive = (stop: Stop) =>
+    pageKindOf(stop.id) ? workspace.views().includes(stop.id) : exists(stop.id)
 
   const push = (stop: Stop) => {
     // What was ahead is the branch just left behind: as in a browser, going
