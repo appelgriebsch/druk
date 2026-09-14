@@ -899,6 +899,30 @@ components take props and call callbacks.
 
 ## Rules
 
+### Ask the library first
+
+Before writing a helper, check that OpenTUI (or the standard library) does not already
+do it. A hand-rolled version of something the renderer owns is a bug waiting for the
+next bump: it drifts from the real behaviour, and the upstream fix lands without
+reaching us. Read the `.d.ts` in `node_modules/@opentui/core` rather than assuming —
+`grep` the option, the event and the setter you want, and check whether the renderable
+already emits it (`ScrollBoxRenderable.scrollTop` writes through its scrollbar, whose
+slider emits `change`, which is what a scroll listener subscribes to).
+
+Where the native path genuinely does not exist, prefer the *smallest* departure, in this
+order: a public option or event; a public method; a documented subclass hook overridden
+in place (`ignoreScrollOutsideBounds` and `allowScrollPastEnd` in `src/ui/EditorPane.tsx`
+are the pattern — a bound original, one named helper, a comment saying which member is
+protected and why the override exists); and, last, reimplementation. Never spell one out
+mid-component, and never patch the same member from two files — one helper, imported.
+
+Reimplementing anything the library part-way provides has to be written down in the same
+change: `OPENTUI-TRADEOFFS.md` lists every such place with the native alternative and the
+feature that taking it would cost. Add a row rather than leaving the next reader to
+rediscover the trade. When a bump makes one of its entries obsolete — a setter appears, an
+event lands, a style attribute becomes expressible — delete the custom code and the row
+together, and bump the OpenTUI version its header is checked against.
+
 ### Comments
 
 The bar is high: write a comment only when its absence would let someone break the code.
@@ -1066,6 +1090,7 @@ Some OpenTUI element names are snake_case (`line_number` is the one druk uses).
 
 ### Scope
 
-- Do not add dependencies for things the standard library or OpenTUI already does.
+- Do not add dependencies for things the standard library or OpenTUI already does,
+  and do not write one either — see "Ask the library first" above.
 - Do not commit or push unless asked.
 - Do not edit `dist/` — it is generated and gitignored.

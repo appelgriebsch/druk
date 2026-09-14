@@ -1,4 +1,4 @@
-import type { KeyEvent, MouseEvent, ScrollBoxRenderable } from '@opentui/core'
+import type { KeyEvent, ScrollBoxRenderable } from '@opentui/core'
 import { useTerminalDimensions } from '@opentui/solid'
 import { createEffect, createMemo, createSignal, For, on, onCleanup, Show } from 'solid-js'
 import type { Accessor } from 'solid-js'
@@ -16,6 +16,7 @@ import {
 } from './DiffView'
 import type { DiffFile, DiffFileStatus, DiffMode } from './DiffView'
 import { useHoverKey } from './hover'
+import { followScroll } from './list'
 import { cut } from './text'
 import { useKeys } from './useKeys'
 
@@ -45,7 +46,6 @@ export interface ChangesMeta {
   dels: number
 }
 
-/** Header line: when the stack was cut, `+X −Y` is what is showing, not the whole change list. */
 export function changesSummary(title: string, shown: number, meta: ChangesMeta): string {
   const counts = `+${meta.adds} −${meta.dels}`
   if (meta.total > shown) {
@@ -144,7 +144,6 @@ export function stickyHeader(scrollTop: number, ys: number[]): StickyHeader | nu
 const areaBadge = (area: ChangeArea) =>
   area === 'unstaged' ? undefined : area === 'merge' ? 'merge' : 'staged'
 
-/** Tail of a path identifies the file — same cut the one-file diff header uses. */
 function cutPath(rel: string, room: number): string {
   if (room <= 0) return ''
   if (rel.length <= room) return rel
@@ -169,19 +168,6 @@ function headerMeta(section: ChangeSection): string {
     bits.push('plain (large file)')
   }
   return `  ${bits.join(' · ')}`
-}
-
-/**
- * The scrollbox emits no scroll event, so the sticky overlay is refreshed from
- * the renderable's own mouse hook — same override the sidebar lists use.
- */
-function watchScroll(el: ScrollBoxRenderable, moved: (top: number) => void) {
-  const host = el as unknown as { onMouseEvent: (event: MouseEvent) => void }
-  const handle = host.onMouseEvent.bind(host)
-  host.onMouseEvent = (event: MouseEvent) => {
-    handle(event)
-    moved(el.scrollTop)
-  }
 }
 
 interface FileHeaderProps {
@@ -653,7 +639,7 @@ export function ChangesView(props: ChangesViewProps) {
           <scrollbox
             ref={(el: ScrollBoxRenderable) => {
               box = el
-              watchScroll(el, top => {
+              followScroll(el, top => {
                 if (top === scrollTop()) return
                 // The wheel and the scrollbar move the page without going
                 // through `scroll`, and are as much the reader moving as a key.

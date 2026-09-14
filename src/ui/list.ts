@@ -3,7 +3,7 @@
  * way. Every one of these was copied between components before it lived here,
  * and the copies had already started to disagree.
  */
-import type { KeyEvent, MouseEvent, ScrollBoxRenderable } from '@opentui/core'
+import type { KeyEvent, ScrollBoxRenderable } from '@opentui/core'
 import { useTerminalDimensions } from '@opentui/solid'
 import { createMemo, createSignal, onCleanup } from 'solid-js'
 
@@ -49,18 +49,12 @@ function enlargeThumb(box: ScrollBoxRenderable) {
 }
 
 /**
- * The scrollbox emits no scroll event, so the window is refreshed from the
- * renderable's own mouse hook — the same override EditorPane uses. Every mouse
- * type is checked, not just `scroll`: dragging its own scrollbar moves the view
- * too, and a window left behind renders the wrong slice.
+ * The scrollbox emits no scroll event of its own — but every way it moves ends
+ * up on its scrollbar, whose slider does: `scrollTop` is the bar's position, so
+ * a wheel notch, a drag of the bar and a programmatic reveal all land here.
  */
-function followScroll(el: ScrollBoxRenderable, moved: (top: number) => void) {
-  const host = el as unknown as { onMouseEvent: (event: MouseEvent) => void }
-  const handle = host.onMouseEvent.bind(host)
-  host.onMouseEvent = (event: MouseEvent) => {
-    handle(event)
-    moved(el.scrollTop)
-  }
+export function followScroll(el: ScrollBoxRenderable, moved: (top: number) => void) {
+  el.verticalScrollBar.on('change', () => moved(el.scrollTop))
 }
 
 /**
