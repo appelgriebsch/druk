@@ -40,7 +40,7 @@ a quick look at the row under the tree's cursor that opens no
 tab at all (Space in the tree, palette → View → Preview file — the file over the
 editor slot, syntax-coloured, following the cursor as ↑↓ walks the tree and paging
 with PgUp/PgDn, since the tree keeps the keyboard; Enter opens the file for real and
-ends the mode, Space or Esc closes it, and a folder, an image, a PDF or a file too
+ends the mode, Space or Esc closes it, and a folder, an image or a file too
 big to read says so rather than showing nothing), tree-sitter syntax
 highlighting, search (current file and project-wide — the project scan and the fuzzy
 file picker both skip git-ignored paths, whatever the tree's `respectGitignore` says, so
@@ -275,8 +275,7 @@ and no fetch. An empty panel is where that is explained: it spells out the chord
 notes a line (asked of the keymap with `chordFor`, so a rebind renames it), the keys the
 panel answers to, and where the notes are kept, since that is the half an agent has to
 be told,
-an image viewer (PNG/JPEG as half-block cells), a PDF viewer (page, zoom and pan controls
-rendered into terminal cells), a rendered view for markdown files (`Ctrl+Opt+M`, palette → View — OpenTUI's
+an image viewer (PNG/JPEG as half-block cells), a rendered view for markdown files (`Ctrl+Opt+M`, palette → View — OpenTUI's
 `<markdown>` renderable over the editor slot, per path so each tab keeps the view it
 was left in, rendering the buffer rather than the file so unsaved edits show, and reached
 from a `¶ preview` / `¶ source` button at the right of the tab strip that is drawn only
@@ -648,9 +647,9 @@ notices. Six things about that are easy to break:
 - **Assets must be static `with { type: 'file' }` imports.** Bun embeds only what it can
   see at build time, so a computed specifier or an `import.meta.resolve` call leaves the
   binary without that file. Every grammar and query goes through
-  `src/languages/grammars.ts` for this reason. PDFium's WASM is likewise imported with
-  `with { type: 'file' }` in `src/core/pdf.ts` and passed as `wasmBinary`, because its
-  implicit sibling lookup cannot work inside Bun's compiled filesystem.
+  `src/languages/grammars.ts` for this reason. A library that resolves a sibling asset
+  at runtime cannot work inside Bun's compiled filesystem either: it has to be given
+  the bytes, from an import spelled the same way.
 - **`index.tsx` must keep the app behind its dynamic import.** `core/assets.ts` stages
   the native library to a per-build cache and points `OTUI_ASSET_ROOT` at it — worth
   ~250ms of startup on macOS, which otherwise re-validates a freshly extracted dylib on
@@ -776,7 +775,6 @@ dependency rule, and recipes for the extension points:
 | --- | --- |
 | language | a `languages` entry in a market manifest — `extensions/<language>/extension.json`, then `bun run extensions`. `grammar` is `{"vendored": "<key in src/languages/grammars.ts>"}` for one druk embeds, `{"bundled": true}` for one OpenTUI carries — but check its query first: OpenTUI's queries gate captures behind `#lua-match?` predicates its worker never evaluates, so such a pattern matches *everything*, which is why typescript/javascript point at the vendored tsx grammar rather than the bundled pair — or `{"wasm": "…", "query": "…"}` for files in the extension folder. `patterns` are `{group, re, flags}` (regex as a string) for a format with no usable grammar; `extensions` / `filenames` / `filenamePattern` claim the names OpenTUI resolves none of. Adding a *vendored* grammar is still a source change: two static imports in `src/languages/grammars.ts`. A grammar that leaves another language's code as one opaque token (vue's `<script>` body is a single `raw_text`) captures that span as `@injection.<filetype>` in its query, and `resolveInjections` (`src/languages/highlight.ts`) reparses it with that filetype's grammar — one level deep, and skipped when no registered language carries that grammar. A span may be a few characters as easily as a whole block: a Vue directive's value (`v-if="a > b"`, `:style="{ w: n + 'px' }"`) is captured that way too, which is what paints the template's own logic as the expressions it is written in rather than as one string. Leaving the coarse `@string` capture over such a span is deliberate — injected captures win the characters they share, so what stays string-coloured is the quotes, the gaps between tokens, and a value the injected grammar made nothing of |
 | language server | a `languageServers` entry in a market manifest — `extensions/<language>/extension.json`, then `bun run extensions`. `install` is `{"kind": "npm", "packages": […]}` or `{"kind": "download", "urls": {"<platform>-<arch>": "…"}}` when druk can fetch it itself, and `{"kind": "manual", "command": "…"}` for a line to print — a `download` carries a `command` too, for the machines the release has no build for; `settings` is the server's own configuration object, passed through unvalidated (it is the *server's* shape, not druk's) and given to it both ways the protocol offers — answered to every `workspace/configuration` item and pushed once as `didChangeConfiguration`. Several servers may claim one filetype and all of them are spawned; users override per-server with the `lspServers` setting, which can only *replace* a command some extension declared (an empty one disables that server alone). A server whose command depends on what the project installed goes in `projectCommand` (`src/lsp/project.ts`) instead, which every server consults first — that part is code, and stays in `src/`, as does anything a manifest cannot spell: `initialize` options are `initializationOptionsFor` in `src/app/lsp.ts`, which is where typescript's tsdk and `vue-typescript`'s plugin path (a directory, found by `vuePluginLocation`) are worked out |
-| PDF viewer | rendering in `src/core/pdf.ts`, UI in `src/ui/PdfView.tsx`, and bufferless routing in `src/app/workspace.ts` |
 | mermaid diagram type | a parser in `src/core/mermaid/parse.ts` answering one of the models in `model.ts`, and a renderer for it in `index.ts`. A type that is a graph of boxes needs no renderer — map it onto `GraphDiagram` and `graph.ts` lays it out. Lines are drawn as the directions they leave a cell in (`canvas.ts`), never as characters, so corners and crossings resolve themselves; `set`/`text` are for glyphs that must win over a line. A type nothing draws must parse to `unsupported`, which is what makes the fence fall back to its source |
 | theme | a `themes` entry in a market manifest — `extensions/<family>/extension.json`, one extension per palette family (catppuccin carries its four flavors), then `bun run extensions`. Only `dark` and `light` are built in, in `src/themes/`, because the defaults name them. Chrome roles that are a *relationship* between two colours (`border`, `sidebarBg`, `solidBg`) are derived in `colorsFor` there and are never listed by a theme. A `syntax` map lists *root* scopes and the sub-scopes it wants to differ: `styleIdForGroup` walks `type.builtin` → `type` by itself, and `FALLBACK_GROUP` (`src/languages/highlight.ts`) is what saves a root the theme never heard of — `attribute` → `property`, `constructor` → `function`, `namespace` → `type`. A group nothing resolves to paints as plain text, which is why that walk decides membership with `getStyle` and not with `getStyleId`: the native style table invents an id for any name it is asked about, so `getStyleId` never answers null |
 | icon theme | an `icons` entry in a market manifest — one codepoint per glyph, since the tree gives it the arrow's single column, and a two-cell glyph is dropped rather than drawn (a Nerd Font one is not two-cell, wherever in the private-use planes it sits). A map's value may name an entry in `definitions`, whose `open` is the expanded form of a folder, so a set of thousands lists each icon once. `unicode` alone is built in (`src/icons/index.ts`), being the set any font already has |

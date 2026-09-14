@@ -10,7 +10,6 @@ import type { Config } from '../core/config'
 import { watchGitRefs, watchTree } from '../core/fs'
 import { isImagePath } from '../core/image'
 import { isMarkdownPath } from '../core/markdown'
-import { isPdfPath } from '../core/pdf'
 import { reportProgress } from '../core/progress'
 import { watchNotes } from '../core/review'
 import { checkForUpdate, currentVersion } from '../core/update'
@@ -33,7 +32,6 @@ import { useHover } from '../ui/hover'
 import { ImageView } from '../ui/ImageView'
 import { LspStatusView } from '../ui/LspStatusView'
 import { MarkdownView } from '../ui/MarkdownView'
-import { PdfView } from '../ui/PdfView'
 import { PreviewPane } from '../ui/PreviewPane'
 import { ReviewPanel } from '../ui/ReviewPanel'
 import { SettingsView } from '../ui/SettingsView'
@@ -230,11 +228,6 @@ export function App(props: {
     return path && isImagePath(path) ? path : null
   }
 
-  const activePdf = () => {
-    const path = workspace.activePath()
-    return path && isPdfPath(path) ? path : null
-  }
-
   /**
    * A page or a viewer is drawn over the editor's slot, so the textarea is neither
    * focused nor taking keys. Read in three places that must agree: EditorPane's
@@ -246,7 +239,6 @@ export function App(props: {
     comparison.detailOpen() ||
     commitView.isOpen() ||
     activeImage() !== null ||
-    activePdf() !== null ||
     workspace.renderedPath() !== null ||
     preview.target() !== null
 
@@ -892,16 +884,6 @@ export function App(props: {
                 </box>
               )}
             </Show>
-            {/* Keep one owner for the App lifetime: a remount can queue its open
-              before the previous instance's late document close. */}
-            <PdfView
-              path={activePdf()}
-              width={slotWidth()}
-              height={slotHeight()}
-              focused={panes.focus() === 'editor'}
-              blocked={overlays.overlay() || workspace.page() !== null || comparison.detailOpen()}
-              onFocus={() => panes.setFocus('editor')}
-            />
             <Show when={workspace.renderedPath()}>
               {(path: () => string) => (
                 <box position="absolute" top={0} left={0} width="100%" height="100%" zIndex={40}>
@@ -1028,20 +1010,18 @@ export function App(props: {
         filetype={
           activeImage()
             ? 'image'
-            : activePdf()
-              ? 'pdf'
-              : workspace.activePath()
-                ? languageLabel(filetypeForPath(workspace.activePath()!) ?? 'plain')
-                : undefined
+            : workspace.activePath()
+              ? languageLabel(filetypeForPath(workspace.activePath()!) ?? 'plain')
+              : undefined
         }
         // A viewer tab has no caret: the numbers would be wherever the editor last was.
         cursor={
-          workspace.activePath() && !activeImage() && !activePdf() && !workspace.renderedPath()
+          workspace.activePath() && !activeImage() && !workspace.renderedPath()
             ? editor.cursor()
             : undefined
         }
         dirty={workspace.activeBuffer()?.dirty ?? false}
-        vimMode={workspace.activePath() && !activeImage() && !activePdf() ? editor.vimMode() : null}
+        vimMode={workspace.activePath() && !activeImage() ? editor.vimMode() : null}
         repo={repoName()}
         branch={git.branch()}
         ahead={git.upstream()?.ahead ?? 0}

@@ -11,7 +11,7 @@ const root = join(import.meta.dir, '..')
 const dist = tempDir('druk-release-')
 afterAll(() => rmSync(dist, { recursive: true, force: true }))
 
-test('release artifacts carry PDFium notices', () => {
+test('release artifacts carry the third-party notices', () => {
   mkdirSync(join(dist, 'windows-x64'), { recursive: true })
   writeFileSync(join(dist, 'windows-x64', 'druk.exe'), 'test binary')
 
@@ -27,17 +27,13 @@ test('release artifacts carry PDFium notices', () => {
 
   const archive = readFileSync(join(dist, 'release/druk-windows-x64.zip')).toString('latin1')
   expect(archive).toContain('THIRD_PARTY_NOTICES.md')
-  expect(archive).toContain('PDFIUM_LICENSE')
   const npm = join(dist, 'npm/druk')
   expect(existsSync(join(npm, 'THIRD_PARTY_NOTICES.md'))).toBe(true)
-  expect(existsSync(join(npm, 'PDFIUM_LICENSE'))).toBe(true)
   const notice = readFileSync(join(npm, 'THIRD_PARTY_NOTICES.md'), 'utf8')
-  expect(notice).toContain('Copyright (c) 2012-2023 Scott Chacon and others')
-  expect(notice).toContain('Permission is hereby granted')
-  expect(notice).toContain('THE SOFTWARE IS PROVIDED "AS IS"')
+  expect(notice).toContain('tree-sitter')
+  expect(notice).toContain('OpenTUI')
   expect(JSON.parse(readFileSync(join(npm, 'package.json'), 'utf8')).files).toEqual([
     'bin',
     'THIRD_PARTY_NOTICES.md',
-    'PDFIUM_LICENSE',
   ])
 })

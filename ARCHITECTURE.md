@@ -63,7 +63,6 @@ scripts/
     fs.ts            file listing, read/write, binary guard, directory watcher
     search.ts        in-file/project search, fuzzy matching, replace
     image.ts         PNG/JPEG decode + scaling onto half-block cells, for the viewer
-    pdf.ts           embedded PDFium WASM, serialized document/page rendering, fit and pan geometry
     mermaid/         mermaid fences drawn into terminal cells: parse.ts reads the
                      dialects, graph.ts lays out anything that is boxes and edges,
                      sequence.ts and pie.ts render their own, canvas.ts is the cell grid
@@ -129,7 +128,7 @@ scripts/
   ui/                presentational components, no app state
     EditorPane, FileTree, GitPanel, ComparePanel, ComparisonView, CompareFilter,
     SidebarTabs, Tabs, Breadcrumbs, PanelHeader, StatusBar, CommandPalette, FilePicker,
-    SearchPanel, DiffView, ChangesView, ImageView, PdfView, PreviewPane, ReviewPanel, SettingsView,
+    SearchPanel, DiffView, ChangesView, ImageView, PreviewPane, ReviewPanel, SettingsView,
     SettingEditor,
     SettingPicker, ExtensionsPanel, LspStatusView, UpdateBanner,
     Overlay, TextInput, PromptModal, ConfirmModal, ChoiceModal, HelpOverlay, Welcome
@@ -622,24 +621,20 @@ is just a diff against the empty tree.
   buffer still claiming CRLF would convert its work straight back. `refText` normalizes for
   the same reason: the other side of a diff is a buffer, so a blob committed with CRLF
   would otherwise diff as every line changed.
-- **Viewer tabs have no buffer.** `isViewerPath` branches before the `readFile` in
-  `openFile`, so a PNG/JPEG or PDF gets a tab that flows through the normal
+- **Viewer tabs have no buffer.** `isImagePath` branches before the `readFile` in
+  `openFile`, so a PNG/JPEG gets a tab that flows through the normal
   preview/pin/session logic while `buffers` never learns about it — the no-buffer
   invariant above is how "never written back" extends to viewers. Everything that assumes
   a tab has a buffer must keep coping with one that does not: `onEditorChange` returns
   early (a phantom buffer created there would hand the viewer file to the save path), and
   `syncFromDisk` closes vanished bufferless tabs in a separate pass, since its main walk
   iterates `buffers`.
-- **The viewer paints cells, not renderables.** `ImageView` and `PdfView` draw `▀` half-blocks
+- **The viewer paints cells, not renderables.** `ImageView` draws `▀` half-blocks
   (upper pixel foreground, lower background) straight into the frame from a `renderAfter`
   hook on one box. A `<text>` per cell would be cols×rows renderables — the Zig core
   stops handing them out a few thousand in, so a photo would blank the pane the way the
   unwindowed tree once did. OpenTUI detects `kitty_graphics`/`sixel` but exposes no way
   to emit them past the cell diff; when it does, that is the upgrade path.
-- **The PDF viewer has one owner per App lifetime.** `App` keeps `PdfView` mounted and
-  passes `null` while another kind of tab is active. The component hides its render tree,
-  but that one open/close drain remains alive, so PDF → non-PDF → PDF cannot queue a new
-  open from a second instance before the first instance's late document close.
 - **The opened folder may hold many repositories, or be one, or be neither.**
   `core/repos.ts` answers which — filesystem-only (a `.git` entry, no subprocess), since
   the tree asks per visible row. A folder inside a checkout is the single-repository case
@@ -793,10 +788,9 @@ is just a diff against the empty tree.
   it holds only the library, and any later lookup under it (tree-sitter's wasm, on
   the first highlight) would throw and silently kill highlighting.
 
-  PDFium follows the static-import rule without staging: `core/pdf.ts` imports its WASM
-  with `with { type: 'file' }`, reads the embedded bytes and passes them as `wasmBinary`.
-  PDFium's normal lookup for a sibling `.wasm` file cannot work inside Bun's compiled
-  filesystem.
+  A library that resolves an asset beside itself at runtime cannot be staged this way
+  at all: inside Bun's compiled filesystem there is no sibling to find, so it has to be
+  handed the bytes from an import spelled the same way.
 - **A Linux binary embeds two native libraries, and staging has to pick.** OpenTUI
   imports `@opentui/core-linux-<arch>` or its `-musl` sibling from a branch on
   `OPENTUI_LIBC`, and `bun install` keeps both packages on a glibc machine — only the

@@ -5,7 +5,6 @@ import { createEffect, createMemo, createSignal, on, onMount, Show } from 'solid
 
 import { BinaryFileError, readFile, sizeOf } from '../core/fs'
 import { isImagePath } from '../core/image'
-import { isPdfPath } from '../core/pdf'
 import { filetypeForPath, getSyntaxStyle, highlightClient } from '../languages/highlight'
 import { paintedTheme, ui } from '../themes'
 import { ImageView } from './ImageView'
@@ -101,7 +100,6 @@ export function PreviewPane(props: PreviewPaneProps) {
   const shown = createMemo<Shown>(() => {
     if (props.isDir) return { kind: 'note', note: 'Folder — → opens it' }
     if (isImagePath(props.path)) return { kind: 'image' }
-    if (isPdfPath(props.path)) return { kind: 'note', note: 'PDF — Enter opens the viewer' }
     if (props.buffer !== undefined) return { kind: 'text', text: props.buffer }
     const bytes = sizeOf(props.path)
     if (bytes > MAX_PREVIEW_BYTES) {

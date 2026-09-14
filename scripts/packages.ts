@@ -62,8 +62,6 @@ export function nfpmConfig(target: LinuxTarget, version: string, distDir = './di
     `    dst: /usr/share/doc/druk/LICENSE`,
     `  - src: ./THIRD_PARTY_NOTICES.md`,
     `    dst: /usr/share/doc/druk/THIRD_PARTY_NOTICES.md`,
-    `  - src: ./third_party/PDFIUM_LICENSE`,
-    `    dst: /usr/share/doc/druk/PDFIUM_LICENSE`,
     ``,
   ].join('\n')
 }

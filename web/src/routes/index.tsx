@@ -83,7 +83,7 @@ function Home() {
             stack trace
           </Feat>
           <Feat name="views">
-            markdown rendered in place — mermaid diagrams included — images, PDFs
+            markdown rendered in place — mermaid diagrams included — and images
           </Feat>
           <Feat name="folding">from indentation, so it works even where no grammar does</Feat>
           <Feat name="vim mode">

@@ -29,6 +29,20 @@ test('a binary file is listed but does not open', async () => {
   expect(frame.split('\n')[0]).not.toContain('.DS_Store')
 })
 
+test('a pdf is a binary file like any other — there is no viewer', async () => {
+  const dir = tempDir()
+  writeFileSync(join(dir, 'report.pdf'), Buffer.from('%PDF-1.4\n\0\0\0\0binary', 'latin1'))
+  const t = await launch(dir)
+
+  await press(t, i => i.pressArrow('down'))
+  await press(t, i => i.pressEnter())
+  await settle(t)
+
+  const frame = t.captureCharFrame()
+  expect(frame).toContain('report.pdf cannot be shown')
+  expect(frame).toContain('binary')
+})
+
 test('the refusal covers the file that was open, and leaves when a key is pressed', async () => {
   const t = await launch(project())
   await openFile(t, 'main.ts')

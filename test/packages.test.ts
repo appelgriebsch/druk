@@ -26,14 +26,13 @@ describe('nfpmConfig', () => {
     expect(nfpmConfig('linux-arm64', '1.0.0')).toContain('arch: arm64')
   })
 
-  test('installs the binary executable to /usr/bin with the three doc files', () => {
+  test('installs the binary executable to /usr/bin with its doc files', () => {
     const config = nfpmConfig('linux-x64', '1.0.0')
     expect(config).toContain('src: ./dist/linux-x64/druk')
     expect(config).toContain('dst: /usr/bin/druk')
     expect(config).toContain('mode: 0755')
     expect(config).toContain('dst: /usr/share/doc/druk/LICENSE')
     expect(config).toContain('dst: /usr/share/doc/druk/THIRD_PARTY_NOTICES.md')
-    expect(config).toContain('dst: /usr/share/doc/druk/PDFIUM_LICENSE')
   })
 })
 

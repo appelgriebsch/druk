@@ -19,7 +19,6 @@ import {
 import type { TextEncoding, TreeNode } from '../core/fs'
 import { isImagePath } from '../core/image'
 import { isMarkdownPath } from '../core/markdown'
-import { isPdfPath } from '../core/pdf'
 import { replaceMatch, replaceProject } from '../core/search'
 import type { Match, SearchOptions } from '../core/search'
 import { loadSession, saveSession } from '../core/session'
@@ -39,8 +38,6 @@ import type { Conflict, DiskSync, FileBuffer, Prompt } from './types'
  */
 export const CLASH_CHANGED = 'Changed on disk with unsaved edits: '
 export const CLASH_DELETED = 'Deleted on disk with unsaved edits: '
-
-const isViewerPath = (path: string) => isImagePath(path) || isPdfPath(path)
 
 const unreadableReason = (e: unknown) =>
   e instanceof BinaryFileError
@@ -65,7 +62,7 @@ export function restoreWorkspace(rootDir: string, single: string | null) {
   if (single) {
     try {
       // A viewer opens with no buffer, so nothing can write it back.
-      const buffers: Record<string, FileBuffer> = isViewerPath(single)
+      const buffers: Record<string, FileBuffer> = isImagePath(single)
         ? {}
         : { [single]: loadBuffer(single) }
       return {
@@ -92,14 +89,14 @@ export function restoreWorkspace(rootDir: string, single: string | null) {
   const saved = loadSession(rootDir)
   const buffers: Record<string, FileBuffer> = {}
   for (const path of saved.tabs) {
-    if (isViewerPath(path)) continue // a viewer tab has no buffer to restore
+    if (isImagePath(path)) continue // a viewer tab has no buffer to restore
     try {
       buffers[path] = loadBuffer(path)
     } catch {
       // unreadable since last time — the tab is dropped below
     }
   }
-  const tabs = saved.tabs.filter(path => buffers[path] || (isViewerPath(path) && exists(path)))
+  const tabs = saved.tabs.filter(path => buffers[path] || (isImagePath(path) && exists(path)))
   const activePath =
     saved.activePath && tabs.includes(saved.activePath) ? saved.activePath : (tabs[0] ?? null)
   return {
@@ -192,10 +189,10 @@ export function createWorkspace(deps: {
   const openFile = (path: string, preview = false) => {
     setNotice(null)
     setPage(null)
-    // Images and PDFs get a viewer tab and no buffer — the door stays shut to a
+    // An image gets a viewer tab and no buffer — the door stays shut to a
     // FileBuffer for anything that is not text, which is what keeps "never written
     // back" structural. The tab itself uses the same preview/pin/session logic.
-    if (!buffers[path] && !isViewerPath(path)) {
+    if (!buffers[path] && !isImagePath(path)) {
       try {
         setBuffers(path, loadBuffer(path))
       } catch (e) {
@@ -924,7 +921,7 @@ export function createWorkspace(deps: {
       else updates.push([path, fresh])
     }
     // Viewer tabs have no buffer, so the walk above never sees them; a deleted
-    // image or PDF has nothing to show and its tab goes the way of a clean buffer's.
+    // image has nothing to show and its tab goes the way of a clean buffer's.
     for (const path of tabs()) {
       if (!buffers[path] && !exists(path)) vanished.push(path)
     }

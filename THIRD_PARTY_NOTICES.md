@@ -1,36 +1,34 @@
 # Third-Party Notices
 
-## PDFium
+The compiled binary bakes in code from the projects below. Each is redistributed
+under its own licence, reproduced or linked here.
 
-Druk's PDF viewer uses `@hyzyla/pdfium` 2.1.13 (MIT) and its WebAssembly build of
-Google's PDFium through `pdfium-lib`.
+## tree-sitter grammars
 
-- Wrapper: <https://github.com/hyzyla/pdfium/tree/v2.1.13>
-- PDFium: <https://pdfium.googlesource.com/pdfium/>
-- WebAssembly SHA-256: `71aec412a303a0405baee21c3d6d3f30ad2033dc02444130fe476be3976e2d09`
+The syntax-highlighting grammars are the WebAssembly builds published as
+`tree-sitter-wasms` 0.1.13 (Unlicense). Each grammar carries the licence of its
+own upstream repository — most are MIT, some Apache 2.0.
 
-PDFium's BSD-style and Apache 2.0 terms are reproduced in
-`third_party/PDFIUM_LICENSE` (named `PDFIUM_LICENSE` in packaged distributions).
+- <https://github.com/Gregoor/tree-sitter-wasms>
+- Tree-sitter: <https://github.com/tree-sitter/tree-sitter> (MIT)
 
-### @hyzyla/pdfium MIT License
+## OpenTUI
 
-Copyright (c) 2012-2023 Scott Chacon and others
+The renderer and its native core are `@opentui/core` and `@opentui/solid` 0.4.5
+(MIT).
 
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
+- <https://github.com/anomalyco/opentui>
 
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
+## Solid
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+`solid-js` 1.9.14 (MIT).
+
+- <https://github.com/solidjs/solid>
+
+## Image decoders
+
+The image viewer decodes PNG with `fast-png` 8.0.0 (MIT) and JPEG with `jpeg-js`
+0.4.4 (BSD-3-Clause).
+
+- <https://github.com/image-js/fast-png>
+- <https://github.com/jpeg-js/jpeg-js>

@@ -28,7 +28,6 @@ const DIST = process.env.DRUK_DIST ?? './dist'
 const NPM_DIR = `${DIST}/npm`
 const RELEASE_DIR = `${DIST}/release`
 const NOTICE = './THIRD_PARTY_NOTICES.md'
-const PDFIUM_LICENSE = './third_party/PDFIUM_LICENSE'
 
 const { version } = await Bun.file('./package.json').json()
 
@@ -65,14 +64,13 @@ for (const target of targets) {
   const archive = `${RELEASE_DIR}/druk-${target}.${os === 'linux' ? 'tar.gz' : 'zip'}`
   const from = `${DIST}/${target}`
   await cp(NOTICE, `${from}/THIRD_PARTY_NOTICES.md`)
-  await cp(PDFIUM_LICENSE, `${from}/PDFIUM_LICENSE`)
   if (os === 'linux') {
-    await Bun.$`tar -czf ${archive} -C ${from} ${exe} THIRD_PARTY_NOTICES.md PDFIUM_LICENSE`
+    await Bun.$`tar -czf ${archive} -C ${from} ${exe} THIRD_PARTY_NOTICES.md`
   } else if (Bun.which('zip')) {
-    await Bun.$`zip -qj ${archive} ${`${from}/${exe}`} ${`${from}/THIRD_PARTY_NOTICES.md`} ${`${from}/PDFIUM_LICENSE`}`
+    await Bun.$`zip -qj ${archive} ${`${from}/${exe}`} ${`${from}/THIRD_PARTY_NOTICES.md`}`
   } else {
     // Windows has no `zip`, but its bsdtar picks the format from the extension.
-    await Bun.$`tar -a -cf ${archive} -C ${from} ${exe} THIRD_PARTY_NOTICES.md PDFIUM_LICENSE`
+    await Bun.$`tar -a -cf ${archive} -C ${from} ${exe} THIRD_PARTY_NOTICES.md`
   }
   process.stdout.write(`packaged ${target} -> ${archive}\n`)
 }
@@ -85,7 +83,6 @@ await cp('./bin/binary.mjs', `${rootDir}/bin/binary.mjs`)
 await cp('./bin/windows-shim.mjs', `${rootDir}/bin/windows-shim.mjs`)
 await cp('./README.md', `${rootDir}/README.md`)
 await cp(NOTICE, `${rootDir}/THIRD_PARTY_NOTICES.md`)
-await cp(PDFIUM_LICENSE, `${rootDir}/PDFIUM_LICENSE`)
 // Not in `files` below, and does not need to be: npm always packs README, LICENSE
 // and package.json whatever `files` says.
 await cp('./LICENSE', `${rootDir}/LICENSE`)
@@ -101,7 +98,7 @@ await Bun.write(
       '//private': undefined,
       'private': undefined,
       'bin': { druk: './bin/druk.js' },
-      'files': ['bin', 'THIRD_PARTY_NOTICES.md', 'PDFIUM_LICENSE'],
+      'files': ['bin', 'THIRD_PARTY_NOTICES.md'],
       // Nothing to build or check here; the one script fetches the binary so that
       // the first run does not have to.
       'scripts': { postinstall: 'node ./bin/postinstall.mjs' },
