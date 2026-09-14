@@ -5,7 +5,7 @@ not do at all, with the native alternative that exists and the feature that is
 lost by taking it.
 
 Checked against **@opentui/core 0.4.5** (`node_modules/@opentui/core/*.d.ts` and
-the shipped implementation), druk **1.25.1**, commit `ccda049`. Re-verify against
+the shipped implementation), druk **1.26.0**, commit `3fce02e`. Re-verify against
 the package on an OpenTUI bump: several entries below exist only because a setter,
 an event or a style attribute is missing, and any of those may land upstream.
 
