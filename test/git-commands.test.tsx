@@ -25,8 +25,10 @@ const subject = (dir: string) =>
 const porcelain = (dir: string) =>
   execFileSync('git', ['status', '--porcelain'], { cwd: dir }).toString()
 
-/** Git mutations finish off the render clock; poll instead of guessing a delay. */
-async function until(t: Harness, cond: () => boolean, ms = 5000) {
+/** Git mutations finish off the render clock; poll instead of guessing a delay.
+ * The budget is generous because a full run spawns git under load — at 5s the
+ * stash test failed there and nowhere else, which reads as a flake and is not. */
+async function until(t: Harness, cond: () => boolean, ms = 15000) {
   const start = Date.now()
   while (!cond() && Date.now() - start < ms) await settle(t, 25)
   expect(cond()).toBe(true)

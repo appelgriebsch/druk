@@ -311,6 +311,9 @@ export function ChangesView(props: ChangesViewProps) {
   let box: ScrollBoxRenderable | undefined
   const anchors = new Map<string, LaidOut>()
   const headers = new Map<string, LaidOut>()
+  /** Whether the page has been scrolled away from the last file revealed onto.
+   * Not a signal: only the layout flip reads it, and never while rendering. */
+  let drifted = false
   let revealTimer: ReturnType<typeof setTimeout> | undefined
   let layoutTimer: ReturnType<typeof setTimeout> | undefined
   let modeTimer: ReturnType<typeof setTimeout> | undefined
@@ -368,11 +371,13 @@ export function ChangesView(props: ChangesViewProps) {
     // A hold re-applies its offset for a few frames; a reader scrolling inside
     // that window must win, or the page would pull itself back under them.
     clearTimeout(modeTimer)
+    drifted = true
     if (box) box.scrollTop = Math.max(0, box.scrollTop + delta)
     syncScroll()
   }
   const scrollTo = (row: number) => {
     clearTimeout(modeTimer)
+    drifted = true
     if (box) box.scrollTop = Math.max(0, row)
     syncScroll()
   }
@@ -383,12 +388,28 @@ export function ChangesView(props: ChangesViewProps) {
    * that did nothing, and where a change *starts* is what the reader was asking
    * for. Both pagers land here — the panel's cursor and Tab inside the page.
    */
-  const reveal = (key: string) => {
+  const reveal = (key: string, into = 0) => {
     const host = box
     const el = anchors.get(key)
     if (!host || !el) return
-    host.scrollTop = el.y - host.y + host.scrollTop
+    host.scrollTop = el.y - host.y + host.scrollTop + Math.round(into * el.height)
+    drifted = into > 0
     syncScroll()
+  }
+
+  /**
+   * How far into `key`'s section the viewport sits, as a share of its height.
+   * Split pads every change block row for row, so the row the reader was on is
+   * not at the same offset afterwards — the same *share* of the file is as
+   * close as a flip can put them back, and it beats being thrown to the top of
+   * a file they were a hundred rows into.
+   */
+  const offsetIn = (key: string) => {
+    const host = box
+    const el = anchors.get(key)
+    if (!host || !el || el.height <= 0) return 0
+    const y = el.y - host.y + host.scrollTop
+    return Math.min(1, Math.max(0, (scrollTop() - y) / el.height))
   }
 
   const headerYs = (): number[] => {
@@ -429,17 +450,40 @@ export function ChangesView(props: ChangesViewProps) {
     const keys = props.sections.map(section => section.key)
     const picked = pickedKey()
     if (picked && keys.includes(picked)) return picked
-    return keys[currentIndex()] ?? null
+    const idx = currentIndex()
+    console.log(
+      'ANCHOR drifted',
+      drifted,
+      'idx',
+      idx,
+      'scrollTop',
+      scrollTop(),
+      'ys',
+      JSON.stringify(headerYs()),
+    )
+    return keys[idx] ?? null
   })
 
   const isSelected = (key: string) => selectedKey() === key
 
-  /** The file the reader is on: the header Tab lit, else the panel cursor's. */
+  /**
+   * The file the reader is on: the header Tab lit, else the panel cursor's —
+   * both of those were scrolled to when they were set. Once the page has been
+   * scrolled since, neither is where the reader is any more, and the file the
+   * viewport is showing is; anchoring a flip on the cursor's file is what used
+   * to throw the scroll away and drop the reader back up the page.
+   *
+   * Not `currentIndex()` throughout: it is measured off the renderables, which
+   * a programmatic reveal moves a layout pass later than the offset it set, so
+   * straight after one it still answers with the file left behind.
+   */
   const anchorKey = () => {
     const keys = props.sections.map(section => section.key)
-    const picked = pickedKey()
-    if (picked && keys.includes(picked)) return picked
-    if (props.focusKey && keys.includes(props.focusKey)) return props.focusKey
+    if (!drifted) {
+      const picked = pickedKey()
+      if (picked && keys.includes(picked)) return picked
+      if (props.focusKey && keys.includes(props.focusKey)) return props.focusKey
+    }
     return keys[currentIndex()] ?? null
   }
 
@@ -450,11 +494,14 @@ export function ChangesView(props: ChangesViewProps) {
    * re-applying an offset that is already right costs nothing and is what keeps
    * the wrong frame from being one the reader sees.
    */
-  const holdAt = (key: string) => {
+  const holdAt = (key: string, into = 0) => {
     clearTimeout(modeTimer)
     let tries = HOLD_FRAMES
     const apply = () => {
-      reveal(key)
+      // `into` is re-applied rather than remembered as rows: each retry reads
+      // the section's height as it is by then, which is the whole point of the
+      // hold — the new heights land a layout pass after the offset is first set.
+      reveal(key, into)
       remeasure()
       if (--tries <= 0) return
       // The first retry is a macrotask, not a frame: when the reconciler has
@@ -475,7 +522,9 @@ export function ChangesView(props: ChangesViewProps) {
       () => props.mode,
       () => {
         const key = anchorKey()
-        if (key) holdAt(key)
+        // Read before the flip lays out: these are the heights the offset the
+        // reader is looking at was measured against.
+        if (key) holdAt(key, offsetIn(key))
       },
       { defer: true },
     ),
@@ -605,7 +654,11 @@ export function ChangesView(props: ChangesViewProps) {
             ref={(el: ScrollBoxRenderable) => {
               box = el
               watchScroll(el, top => {
-                if (top !== scrollTop()) setScrollTop(top)
+                if (top === scrollTop()) return
+                // The wheel and the scrollbar move the page without going
+                // through `scroll`, and are as much the reader moving as a key.
+                drifted = true
+                setScrollTop(top)
               })
             }}
             flexGrow={1}

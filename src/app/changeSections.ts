@@ -58,8 +58,10 @@ const sectionCost = (section: ChangeSection) => Math.max(1, section.lines)
  * Walk panel-order changes into stacked sections, stopping once the patches
  * would exceed `maxLines`. The file under the panel cursor (`pin`) is kept
  * even past that cap: arrows that land on an omitted row would otherwise
- * scroll nowhere. Previous section objects are reused when the texts have
- * not moved, so the list does not remount every git revision.
+ * scroll nowhere — and when the cap cut the walk before reaching it, the whole
+ * budget is spent *from* that file instead, so the page carries on past the one
+ * being read rather than ending on it. Previous section objects are reused when
+ * the texts have not moved, so the list does not remount every git revision.
  */
 export function takeChangeSections(
   ordered: Change[],
@@ -68,32 +70,44 @@ export function takeChangeSections(
   pin: string | null,
   maxLines = DIFF_MAX_LINES,
 ): { sections: ChangeSection[]; adds: number; dels: number; keep: Set<string> } {
-  const sections: ChangeSection[] = []
-  const keep = new Set<string>()
-  let lines = 0
-  let adds = 0
-  let dels = 0
-  let full = false
+  const walk = (from: number) => {
+    const sections: ChangeSection[] = []
+    const keep = new Set<string>()
+    let lines = 0
+    let adds = 0
+    let dels = 0
+    let full = false
 
-  const push = (section: ChangeSection) => {
-    sections.push(section)
-    keep.add(section.key)
-    lines += sectionCost(section)
-    adds += section.adds
-    dels += section.dels
-    if (lines >= maxLines) full = true
-  }
-
-  for (const change of ordered) {
-    const key = slotKey(change.path, change.area)
-    if (full && key !== pin) continue
-    const section = sectionFor(change, fileFor(change), prev.get(key))
-    if (!full && lines + sectionCost(section) > maxLines && sections.length > 0 && key !== pin) {
-      full = true
-      continue
+    const push = (section: ChangeSection) => {
+      sections.push(section)
+      keep.add(section.key)
+      lines += sectionCost(section)
+      adds += section.adds
+      dels += section.dels
+      if (lines >= maxLines) full = true
     }
-    push(section)
+
+    for (const change of ordered.slice(from)) {
+      const key = slotKey(change.path, change.area)
+      if (full && key !== pin) continue
+      const section = sectionFor(change, fileFor(change), prev.get(key))
+      if (!full && lines + sectionCost(section) > maxLines && sections.length > 0 && key !== pin) {
+        full = true
+        continue
+      }
+      push(section)
+    }
+
+    return { sections, adds, dels, keep }
   }
 
-  return { sections, adds, dels, keep }
+  const first = walk(0)
+  if (!pin) return first
+  const at = ordered.findIndex(change => slotKey(change.path, change.area) === pin)
+  // The pinned file ended the page while changes follow it: everything after it
+  // was cut, which reads as a page that will not scroll past the file being
+  // read. Walking again from it spends the same budget on those instead.
+  const cutAfterPin =
+    at > 0 && at < ordered.length - 1 && first.sections[first.sections.length - 1]?.key === pin
+  return cutAfterPin ? walk(at) : first
 }

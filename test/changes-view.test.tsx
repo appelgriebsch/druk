@@ -13,6 +13,7 @@ import {
   until,
   untilFrame,
   untilGone,
+  settle,
 } from './helpers'
 import type { Harness } from './helpers'
 import { tempDir } from './temp'
@@ -430,6 +431,34 @@ test('flipping the layout keeps the file being read at the top', async () => {
   await press(t, i => i.pressKey('s', { shift: true }))
   await untilFrame(t, 'side-by-side')
   expect(rowOf(t, '▾ M b.ts')).toBe(3)
+})
+
+test('flipping the layout holds where the wheel left the page, not the panel cursor', async () => {
+  // The panel's cursor is still on the first file: the reader scrolled past it
+  // with the wheel, and a flip anchored on the cursor threw that scroll away.
+  const dir = repo({ 'a.ts': many('old'), 'b.ts': many('old') })
+  writeFileSync(join(dir, 'a.ts'), many('alpha'))
+  writeFileSync(join(dir, 'b.ts'), many('beta'))
+
+  const t = await launch(dir, {}, { width: 130, height: 24 })
+  await runCommand(t, 'Show all changes')
+  await untilFrame(t, '▾ M a.ts')
+
+  // Wheel over the page itself, which leaves the keyboard in the panel.
+  const atTop = () => rowOf(t, '▾ M b.ts') >= 0 && rowOf(t, '▾ M b.ts') <= 5
+  for (let n = 0; n < 200 && !atTop(); n++) {
+    await t.mockMouse.scroll(80, 10, 'down')
+    await settle(t)
+  }
+  expect(atTop()).toBe(true)
+
+  await press(t, i => i.pressKey('s', { shift: true }))
+  await untilFrame(t, 'side-by-side')
+  // Near where it was: the reader is still at the end of a.ts and the start of
+  // b.ts, not back at the top of the file the panel's cursor is on.
+  expect(t.captureCharFrame()).toContain('▾ M b.ts')
+  expect(t.captureCharFrame()).toContain('+ beta0')
+  expect(t.captureCharFrame()).not.toContain('+ alpha0')
 })
 
 test('Space on the page stages the file its header names', async () => {

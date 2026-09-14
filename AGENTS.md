@@ -203,15 +203,23 @@ screen: a move that scrolls nothing reads as a key that did nothing, and where a
 change starts is what was being asked for. `s` in the page — `S` in the panel, where
 plain `s` is sync, and palette → Git → Toggle diff layout — flips the whole page
 between inline and side-by-side, Tab being spent on the file walk; the hints name
-whichever of the two the keyboard can reach from where it is, and the flip puts the
-file being read back at the top — split pads every change block row for row, so the
-sections all change height and a kept scroll offset would land somewhere else. That
-re-anchor is re-applied over the next few frames rather than once: the scrollbox
-clamps an offset against the height it still has and the new heights arrive a layout
-pass later, so a single shot lands short and the page visibly jumps and comes back. A
-wheel or a key inside that window cancels the hold, the reader outranking it. A
-file past the stacked-row cap is kept when the cursor lands on it, so landing is not
-empty; the header says how many were left out, the page goes when the last change
+whichever of the two the keyboard can reach from where it is, and the flip holds the
+reader's place — split pads every change block row for row, so the sections all change
+height and a kept scroll offset would land somewhere else. The place it holds is a
+*share* of the anchor file's height rather than its first row: a reader a hundred rows
+into a diff is put back a hundred-ish rows in, since a flip that throws them to the top
+of the file they were reading is the jump this re-anchor exists to prevent. Which file
+that is, is the one the viewport is showing once the page has been scrolled, and the
+Tab-lit or panel-cursor file until then — those two are revealed when they are set, and
+`currentIndex()` is measured off the renderables, which a programmatic reveal moves a
+layout pass later than the offset it set. That re-anchor is re-applied over the next few
+frames rather than once: the scrollbox clamps an offset against the height it still has
+and the new heights arrive a layout pass later, so a single shot lands short and the
+page visibly jumps and comes back. A wheel or a key inside that window cancels the hold,
+the reader outranking it. The stacked-row cap is spent *from* the file under the panel's
+cursor when the walk could not reach it — a page that ended on the file being read is a
+page that will not scroll past it — so the files after it are what fills the budget, and
+the header says how many were left out; the page goes when the last change
 does, and Esc closes it — a
 comparison base that points marks, gutter, panel and diff at another branch instead of
 HEAD (palette → Git → Compare against branch…), branch comparison against the
