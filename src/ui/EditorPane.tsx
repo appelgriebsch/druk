@@ -2747,6 +2747,11 @@ export function EditorPane(props: EditorPaneProps) {
               focusedBackgroundColor={ui.bg}
               focusedTextColor={ui.text}
               cursorColor={ui.cursor}
+              // Without a selection colour OpenTUI inverts the cell — selection bg
+              // becomes the text colour, selection fg the pane's background — and
+              // with `transparent` on that background has alpha 0, which it falls
+              // back to opaque black for: every selected run paints as a black block.
+              selectionBg={ui.treeSelectedBg}
               // Vim owns the caret while it is on: the shape is how normal and insert
               // are told apart, so the setting yields to it. Every input to the shape
               // is read here rather than some of them assigned when the mode changes —
