@@ -82,7 +82,10 @@ jobs:
           $cache = Join-Path $root 'install\cache'
           New-Item -ItemType Directory -Force -Path $cache | Out-Null
           $cached = Join-Path $cache "bun-windows-x64-baseline-v$version"
-          Invoke-WebRequest -UseBasicParsing -OutFile baseline.zip `
+          # GitHub's release CDN answers a transient 504 often enough to lose a
+          # whole release on this one download; retries cost nothing when it does not.
+          Invoke-WebRequest -UseBasicParsing -MaximumRetryCount 3 -RetryIntervalSec 5 `
+            -OutFile baseline.zip `
             "https://github.com/oven-sh/bun/releases/download/bun-v$version/bun-windows-x64-baseline.zip"
           Expand-Archive -LiteralPath baseline.zip -DestinationPath baseline -Force
           Move-Item -Force 'baseline\bun-windows-x64-baseline\bun.exe' $cached
@@ -146,7 +149,7 @@ jobs:
       # tarball is a one-line pin bump.
       - name: Package for deb and rpm
         run: |
-          curl -fsSL -o nfpm.tar.gz \
+          curl -fsSL --retry 3 --retry-delay 5 -o nfpm.tar.gz \
             https://github.com/goreleaser/nfpm/releases/download/v2.47.0/nfpm_2.47.0_Linux_x86_64.tar.gz
           echo "0660ca602b2d2d2ae4781a06c692b3eeb9d437ffea05b831d76e41f4a3188783  nfpm.tar.gz" | sha256sum -c -
           tar -xzf nfpm.tar.gz nfpm
