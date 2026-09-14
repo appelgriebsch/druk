@@ -117,7 +117,9 @@ describe('runFormatter', () => {
   })
 
   test('a failing command reports the first stderr line', async () => {
-    const { command, dir } = script('console.error("boom\\nmore"); process.exit(2)')
+    // Not `console.error`: Bun decorates it with a source frame, which would be
+    // the first stderr line instead of the message.
+    const { command, dir } = script('process.stderr.write("boom\\nmore\\n"); process.exit(2)')
     const error = await runFormatter(command, '/p/a.ts', dir)
     expect(error).toBe('boom')
   })

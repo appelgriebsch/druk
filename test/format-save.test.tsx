@@ -12,8 +12,10 @@ const file = process.argv[2]
 fs.writeFileSync(file, fs.readFileSync(file, 'utf8').toUpperCase())
 `
 
+// Written to the stream rather than through `console.error`, which Bun decorates
+// with a source frame — the first stderr line would then be the frame, not the message.
 const FAIL = `
-console.error('boom: bad syntax')
+process.stderr.write('boom: bad syntax\\n')
 process.exit(2)
 `
 
