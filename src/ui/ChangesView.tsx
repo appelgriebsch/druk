@@ -436,18 +436,7 @@ export function ChangesView(props: ChangesViewProps) {
     const keys = props.sections.map(section => section.key)
     const picked = pickedKey()
     if (picked && keys.includes(picked)) return picked
-    const idx = currentIndex()
-    console.log(
-      'ANCHOR drifted',
-      drifted,
-      'idx',
-      idx,
-      'scrollTop',
-      scrollTop(),
-      'ys',
-      JSON.stringify(headerYs()),
-    )
-    return keys[idx] ?? null
+    return keys[currentIndex()] ?? null
   })
 
   const isSelected = (key: string) => selectedKey() === key
