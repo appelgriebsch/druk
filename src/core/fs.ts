@@ -56,6 +56,29 @@ export interface Changed {
 }
 
 /**
+ * `fs.watch` with the failures it reports *after* returning handled. A recursive
+ * watch descends once it is running, so a directory it cannot add — the inotify
+ * limit exhausted on a huge tree (`ENOSPC`, a `/home` full of cargo and npm
+ * caches: letstri/druk#101), a permission denied — arrives as an `error` event,
+ * and an unhandled one on an EventEmitter is thrown at the process, which paints
+ * the failure over the editor. Best-effort, as every watcher here is: that path
+ * goes unwatched and nothing is said.
+ */
+export function watchPath(
+  path: string,
+  options: fs.WatchOptions,
+  listener: (event: fs.WatchEventType, filename: string | Buffer | null) => void,
+): fs.FSWatcher | null {
+  try {
+    const watcher = fs.watch(path, options, listener)
+    watcher.on('error', () => watcher.close())
+    return watcher
+  } catch {
+    return null
+  }
+}
+
+/**
  * Watch `root` and call `onChange` (debounced) on any file event. Returns a stop
  * function. Best-effort — an unwatchable path is simply left unwatched.
  *
@@ -86,13 +109,10 @@ export function watchTree(root: string, onChange: (changed: Changed) => void): (
     options: fs.WatchOptions,
     classify: (name: string | undefined) => (keyof Changed)[],
   ) => {
-    try {
-      watchers.push(
-        fs.watch(path, options, (_event, filename) => schedule(...classify(filename?.toString()))),
-      )
-    } catch {
-      // best-effort: this path just goes unwatched
-    }
+    const watcher = watchPath(path, options, (_event, filename) =>
+      schedule(...classify(filename?.toString())),
+    )
+    if (watcher) watchers.push(watcher)
   }
 
   watch(root, { recursive: true }, name => {
@@ -131,11 +151,8 @@ export function watchTree(root: string, onChange: (changed: Changed) => void): (
 export function watchGitRefs(repo: string, onChange: () => void): () => void {
   const watchers: fs.FSWatcher[] = []
   const watch = (path: string, options: fs.WatchOptions) => {
-    try {
-      watchers.push(fs.watch(path, options, () => onChange()))
-    } catch {
-      // best-effort: this path just goes unwatched
-    }
+    const watcher = watchPath(path, options, () => onChange())
+    if (watcher) watchers.push(watcher)
   }
   const gitDir = join(repo, '.git')
   watch(join(gitDir, 'HEAD'), {})

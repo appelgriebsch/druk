@@ -4,7 +4,7 @@ import { join } from 'node:path'
 
 import { buildCommands } from '../src/app/commands'
 import type { CommandActions } from '../src/app/commands'
-import { readFile, watchTree } from '../src/core/fs'
+import { readFile, watchPath, watchTree } from '../src/core/fs'
 import type { Changed } from '../src/core/fs'
 import { searchProject, searchText } from '../src/core/search'
 import { isNewer } from '../src/core/update'
@@ -63,6 +63,20 @@ describe('files', () => {
       expect(seen.at(-1)).toEqual({ tree: true, git: false, deps: true })
     } finally {
       stop()
+    }
+  })
+
+  test('a watcher error is not thrown at the process', () => {
+    const dir = tempDir('druk-watch-')
+    const watcher = watchPath(dir, { recursive: true }, () => {})
+    try {
+      // What a recursive watch over a huge tree reports once the inotify limit
+      // is reached (letstri/druk#101) — unhandled, an EventEmitter throws it.
+      expect(() =>
+        watcher?.emit('error', new Error('ENOSPC: no space left on device, watch')),
+      ).not.toThrow()
+    } finally {
+      watcher?.close()
     }
   })
 })

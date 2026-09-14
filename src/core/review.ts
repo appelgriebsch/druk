@@ -20,6 +20,7 @@ import fs from 'node:fs'
 import { basename, dirname, join } from 'node:path'
 
 import { CONFIG_FILE } from './config'
+import { watchPath } from './fs'
 
 const NOTES_FILE = join(dirname(CONFIG_FILE), 'review.json')
 
@@ -211,18 +212,17 @@ export function saveNotes(rootDir: string, notes: ReviewNote[], options: SaveOpt
  */
 export function watchNotes(onChange: () => void, file = NOTES_FILE): () => void {
   let timer: ReturnType<typeof setTimeout> | null = null
-  let watcher: fs.FSWatcher | null = null
   const name = basename(file)
   try {
     fs.mkdirSync(dirname(file), { recursive: true })
-    watcher = fs.watch(dirname(file), (_event, filename) => {
-      if (filename && filename.toString() !== name) return
-      if (timer) clearTimeout(timer)
-      timer = setTimeout(onChange, 80) // coalesce bursts, as watchTree does
-    })
   } catch {
     // best-effort: the notes just go unwatched
   }
+  const watcher = watchPath(dirname(file), {}, (_event, filename) => {
+    if (filename && filename.toString() !== name) return
+    if (timer) clearTimeout(timer)
+    timer = setTimeout(onChange, 80) // coalesce bursts, as watchTree does
+  })
   return () => {
     if (timer) clearTimeout(timer)
     watcher?.close()
