@@ -44,7 +44,6 @@ import { noRepository, runCommit } from './git'
 import type { CommitVariant } from './git'
 import { problemFrom, problemsOn } from './lsp'
 
-/** Wire the palette's command tree to the controllers that carry the actions out. */
 export function createCommands(ctx: AppContext) {
   const {
     rootDir,
@@ -454,7 +453,6 @@ export function createCommands(ctx: AppContext) {
     panes.setFocus('editor')
   }
 
-  /** The line the cursor is on, as the buffer holds it. */
   const cursorLine = (path: string): string => {
     const at = editor.cursor()
     return workspace.buffers[path]?.content.split('\n')[at.line] ?? ''
@@ -473,7 +471,6 @@ export function createCommands(ctx: AppContext) {
     run({ path, line, endLine: span ? span.to : line })
   }
 
-  /** Enter in the review panel: land on the line a remark is about. */
   const openNote = (path: string, line: number) => openAt(path, line, 0)
 
   /**
@@ -505,7 +502,6 @@ export function createCommands(ctx: AppContext) {
     editor.requestGoto(target.line, 0)
   }
 
-  /** Jump to the neighbouring problem and read it out in the status bar. */
   const jumpProblem = (direction: 1 | -1) => {
     const path = workspace.activePath()
     const list = path ? ctx.lsp.problems[path] : undefined

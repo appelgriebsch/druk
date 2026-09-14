@@ -750,7 +750,6 @@ export function EditorPane(props: EditorPaneProps) {
   const trackHeight = createMemo(() => viewHeight() || dimensions().height - 2)
   const trackTotal = createMemo(() => viewTotal() || lineCount())
 
-  /** Track geometry, shared by the painter and the drag handler. */
   const scrollMetrics = createMemo(() => {
     const height = trackHeight()
     const total = trackTotal()

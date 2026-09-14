@@ -28,7 +28,6 @@ export interface FlatCommand {
   trail: string[]
 }
 
-/** Every runnable leaf, with its path — used while filtering. */
 export function flattenCommands(commands: Command[], trail: string[] = []): FlatCommand[] {
   return commands.flatMap(command =>
     command.children

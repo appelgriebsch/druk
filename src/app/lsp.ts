@@ -93,7 +93,6 @@ function siblingIds(from: string): Set<string> {
   )
 }
 
-/** Language servers: one per language, diagnostics per open file. */
 export function createLsp(deps: {
   rootDir: string
   settings: Settings
@@ -465,7 +464,7 @@ export function createLsp(deps: {
   }
 
   /**
-   * Kill every server and forget the failure marks, so the next `clientFor`
+   * Kill every server and forget the failure marks, so the next `clientsFor`
    * starts fresh. Serves both App teardown and the settings toggle: turning LSP
    * back on respawns servers as files re-sync.
    */
@@ -490,13 +489,12 @@ export function createLsp(deps: {
 
   let depsTimer: ReturnType<typeof setTimeout> | null = null
 
-  /** The watcher saw a dependency directory written. */
   const dependenciesChanged = () => {
     if (!settings.config.lsp) return
     if (depsTimer) clearTimeout(depsTimer)
     depsTimer = setTimeout(() => {
       depsTimer = null
-      // Nothing spawned yet: the next `clientFor` reads the new tree anyway, and
+      // Nothing spawned yet: the next `clientsFor` reads the new tree anyway, and
       // saying so about servers the user never started would be noise.
       if (restart()) status.say('Dependencies changed — restarted language servers')
     }, DEPENDENCY_QUIET_MS)
@@ -683,7 +681,7 @@ export function wireLspEffects(deps: { lsp: Lsp; settings: Settings; workspace: 
       return
     }
 
-    // Tracked for its side effect on `clientFor`: a server just installed can
+    // Tracked for its side effect on `clientsFor`: a server just installed can
     // now spawn, and the documents it should have opened are already open.
     lsp.generation()
 
@@ -789,7 +787,6 @@ export function wireLspEffects(deps: { lsp: Lsp; settings: Settings; workspace: 
  * The problem at or after (`direction` 1) / before (−1) the cursor, wrapping
  * around the file. `list` is sorted by position, as `createLsp` stores it.
  */
-/** Every problem on `line`, worst first — what the cursor is standing in. */
 export function problemsOn(list: Problem[], line: number): Problem[] {
   return list
     .filter(problem => problem.line === line)

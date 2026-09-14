@@ -93,7 +93,6 @@ export function diffMark(status: DiffFileStatus): string {
   return MARKS[status]
 }
 
-/** Right-edge word on a stacked file header — modified has the mark and no word. */
 export function diffStatusLabel(status: DiffFileStatus): string | undefined {
   if (status === 'added' || status === 'untracked') return 'new'
   if (status === 'deleted') return 'deleted'
@@ -182,7 +181,6 @@ interface DiffSides {
   rightCodeRenderable?: CodePane | null
 }
 
-/** Which source document a pane line shows, and which of its lines. */
 interface LineRef {
   side: 'old' | 'new'
   line: number
@@ -293,7 +291,7 @@ export function DiffView(props: DiffViewProps) {
    * pane runs.
    *
    * Cached per path, texts and all, because the page is fed the same changes
-   * over and over with nothing new in them: `refreshDiff` hands it a fresh
+   * over and over with nothing new in them: `refreshChanges` hands it a fresh
    * object on every git revision, and the panel's arrows land on a file the
    * cursor already visited. A big lock file's patch costs real milliseconds,
    * and returning the *same value* is also what lets the effect below and the
@@ -596,7 +594,6 @@ export function DiffView(props: DiffViewProps) {
     key.preventDefault()
   })
 
-  /** Long spelling when the pane can afford it, initials beside a sidebar. */
   const hints = () => {
     if (section()) return ''
     const layout = mode() === 'inline' ? 'inline' : 'side-by-side'

@@ -18,8 +18,6 @@ describe('text objects', () => {
     return { t, dir, file: join(dir, 'a.ts') }
   }
 
-  // ---- inner (i) variants: { } ----
-
   test('di{ deletes the inner block from normal mode', async () => {
     const { t, file } = await bEdit(BRACE)
     await type(t, '012l')
@@ -49,8 +47,6 @@ describe('text objects', () => {
     await type(t, 'd')
     expect(await save(t, file)).toBe('const x = {}\n')
   })
-
-  // ---- around (a) variants: { } ----
 
   test('da{ deletes block including braces', async () => {
     const { t, file } = await bEdit(BRACE)
@@ -82,8 +78,6 @@ describe('text objects', () => {
     expect(await save(t, file)).toBe('const x = \n')
   })
 
-  // ---- ( ) variants ----
-
   test('di( deletes inner parens', async () => {
     const { t, file } = await bEdit(PAREN)
     await type(t, '012l')
@@ -112,8 +106,6 @@ describe('text objects', () => {
     expect(await save(t, file)).toBe('const x = ()\n')
   })
 
-  // ---- [ ] variants ----
-
   test('di[ deletes inner brackets', async () => {
     const { t, file } = await bEdit(BRACKET)
     await type(t, '012l')
@@ -134,8 +126,6 @@ describe('text objects', () => {
     await type(t, 'yi[$p')
     expect(await save(t, file)).toBe('const x = [ hello ] hello \n')
   })
-
-  // ---- cursor on the bracket itself ----
 
   test('di{ with cursor on open brace', async () => {
     const { t, file } = await bEdit(BRACE)
@@ -158,8 +148,6 @@ describe('text objects', () => {
     expect(await save(t, file)).toBe('const x = \n')
   })
 
-  // ---- cursor outside the pair — no-op ----
-
   test('di{ with cursor before pair is a no-op', async () => {
     const { t, file } = await bEdit(BRACE)
     await type(t, '04l')
@@ -173,8 +161,6 @@ describe('text objects', () => {
     await type(t, 'di{')
     expect(await save(t, file)).toBe('before { hello } after\n')
   })
-
-  // ---- nested ----
 
   test('di{ with nested braces deletes the innermost pair', async () => {
     const { t, file } = await bEdit('outer { inner { core } more }\n')
@@ -190,16 +176,12 @@ describe('text objects', () => {
     expect(await save(t, file)).toBe('outer { inner  more }\n')
   })
 
-  // ---- no matching pair ----
-
   test('di{ with no braces in file is a no-op', async () => {
     const { t, file } = await vimEditor('hello world\n')
     await type(t, '012l')
     await type(t, 'di{')
     expect(await save(t, file)).toBe('hello world\n')
   })
-
-  // ---- empty braces ----
 
   test('di{ on empty braces is a no-op', async () => {
     const { t, file } = await bEdit('const x = {}\n')
@@ -215,8 +197,6 @@ describe('text objects', () => {
     expect(await save(t, file)).toBe('const x = \n')
   })
 
-  // ---- canceled prefix must not leak into later keys ----
-
   test('diw cancels the prefix: a later { is a paragraph motion again', async () => {
     const { t } = await vimEditor('a { b }\n\nc { d }\ne\n')
     await type(t, 'jj04l') // Ln 3, cursor inside { d }
@@ -230,8 +210,6 @@ describe('text objects', () => {
     await type(t, 'gi{')
     expect(at(t)).toContain('Col 1')
   })
-
-  // ---- visual mode text objects ----
 
   test('vi{ in visual mode, c changes inner block', async () => {
     const { t, file } = await bEdit(BRACE)

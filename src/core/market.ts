@@ -230,7 +230,6 @@ export const isStale = (cached: CachedCatalog | null, now: number): boolean =>
 /** Where an installed market extension lives. One folder, so removing it is a delete. */
 export const extensionDir = (id: string, root: string): string => join(root, id)
 
-/** A manifest that has been fetched and validated, but not yet written. */
 export type Fetched =
   | { ok: true; extension: Extension; body: string }
   | { ok: false; error: string }

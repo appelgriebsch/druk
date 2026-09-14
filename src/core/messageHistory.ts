@@ -6,7 +6,6 @@
 export interface HistoryStep {
   /** Where the walk now stands; `-1` is the draft. */
   at: number
-  /** What the field should now hold. */
   value: string
   /** The draft to restore, carried so the caller can hold it as one value. */
   draft: string

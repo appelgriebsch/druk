@@ -41,7 +41,6 @@ export type ThemeName = string
  */
 const BUILTIN: Record<string, Theme> = { ...THEMES }
 
-/** Every theme on offer — the built-ins, plus whatever extensions registered. */
 const registry: Record<string, Theme> = { ...THEMES }
 
 /** Registered by an extension, and dropped again when extensions reload. */
@@ -98,7 +97,6 @@ function mix(base: string, tint: string, amount: number): string {
   return `#${to(1)}${to(3)}${to(5)}`
 }
 
-/** The store's contents for a theme, with `transparent` applied or not. */
 function colorsFor(name: ThemeName, transparent: boolean): UiColors {
   const theme = themeFor(name).ui
   return {

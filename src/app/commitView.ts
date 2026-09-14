@@ -66,7 +66,6 @@ export function createCommitView(deps: { status: Status }) {
     setFileCursor(0)
   }
 
-  /** A page is up — it owns the editor slot and the first Esc. */
   const isOpen = () => commit() !== null
 
   return { commit, file, content, open, moveFile, close, isOpen }

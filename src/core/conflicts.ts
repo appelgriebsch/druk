@@ -88,7 +88,6 @@ export function parseConflicts(text: string): MergeConflict[] {
   return found
 }
 
-/** Whether `line` is inside `conflict`, markers included. */
 export const covers = (conflict: MergeConflict, line: number): boolean =>
   line >= conflict.start && line <= conflict.end
 

@@ -210,7 +210,6 @@ export function createReview(deps: { rootDir: string; status: Status; workspace:
    */
   const notesFor = (path: string) => threadStarts().filter(note => note.path === path)
 
-  /** What the editor draws beside a line: the threads of the open file, one per line. */
   const marks = createMemo(() => {
     const path = workspace.activePath()
     const byLine = new Map<number, { draft: boolean; label: string; text: string }>()
@@ -311,7 +310,6 @@ export function createReview(deps: { rootDir: string; status: Status; workspace:
 
   const collapseAll = () => setCollapsed(new Set(grouped().map(entry => entry.rel)))
 
-  /** The line one remark is about. */
   const placeOf = (note: ReviewNote) => ({ path: note.path, line: note.line })
 
   /**

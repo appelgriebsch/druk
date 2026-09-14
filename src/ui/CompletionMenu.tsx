@@ -25,7 +25,6 @@ export interface CompletionMenuProps {
   left: number
 }
 
-/** A run of the signature painted as one `<text>`. */
 interface Span {
   text: string
   fg: string

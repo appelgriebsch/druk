@@ -48,7 +48,6 @@ export function hiddenNodes(
   return node => (hideDots && node.name.startsWith('.')) || isIgnored(node.path)
 }
 
-/** File-tree state: which folders are open, where the cursor is, what is marked. */
 export function createTree(
   rootDir: string,
   initial: { expanded: string[]; selected: string | null },

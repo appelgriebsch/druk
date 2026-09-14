@@ -483,7 +483,6 @@ export function categoriesOf(parts: {
   return found
 }
 
-/** The one-line summary the palette and the settings page show. */
 export function contributionSummary(extension: Extension): string {
   const counts = [
     [extension.themes.length, 'theme'],

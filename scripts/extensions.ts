@@ -42,7 +42,6 @@ export function readMarket(dir = MARKET_DIR): Extension[] {
   })
 }
 
-/** The catalog the market folder describes. */
 export function buildIndex(dir = MARKET_DIR): { extensions: MarketEntry[] } {
   return { extensions: readMarket(dir).map(entryFor) }
 }

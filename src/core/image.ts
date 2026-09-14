@@ -100,7 +100,6 @@ export function toCells(img: RawImage, maxCols: number, maxRows: number): CellIm
   return { cols, rows, cells }
 }
 
-/** Average of the source pixels that map onto target pixel (tx, ty). */
 function boxAverage(
   img: RawImage,
   tx: number,

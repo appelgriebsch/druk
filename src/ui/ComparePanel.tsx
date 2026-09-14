@@ -22,7 +22,6 @@ export interface ComparePanelProps {
   onActivate: (index: number) => void
 }
 
-/** Branch-comparison mode inside the existing source-control sidebar. */
 export function ComparePanel(props: ComparePanelProps) {
   const rows = () => (props.mode === 'files' ? props.files : props.commits)
   /** A memo so the reveal below fires on the cursor's *value* — see GitPanel. */

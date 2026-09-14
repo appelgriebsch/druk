@@ -63,7 +63,6 @@ export function detectInstall(
 /** Where the packages live; a system install is pointed here, never run for. */
 export const RELEASES_URL = 'https://github.com/letstri/druk/releases/latest'
 
-/** The shell command that upgrades this install, ready to print and to run. */
 export function upgradeCommand(install: Install): string {
   if (install.kind === 'brew') return 'brew upgrade letstri/tap/druk'
   if (install.kind === 'script') return 'curl -fsSL https://druk.letstri.dev/install | bash'

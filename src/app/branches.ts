@@ -15,7 +15,6 @@ import type { Git, GitOp } from './git'
 import type { PromptState } from './prompts'
 import type { Status } from './status'
 
-/** What picking a branch in the picker goes on to do with it. */
 export type BranchMode =
   | 'switch'
   | 'from'
@@ -85,7 +84,6 @@ export function createBranches(deps: {
 }) {
   const { status, git, gitOp, prompts } = deps
 
-  /** The open branch picker: what it lists and what picking will mean. */
   const [pick, setPick] = createSignal<{ mode: BranchMode; branches: Branch[] } | null>(null)
 
   const pickTitle = () => {

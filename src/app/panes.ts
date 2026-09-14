@@ -38,7 +38,6 @@ export function createPanes(tree: Tree, initialSidebar: boolean) {
     focusTree()
   }
 
-  /** Open the sidebar on one of its views, as the tab strip above it does. */
   const showView = (next: SidebarView) => {
     setView(next)
     setSidebar(true)

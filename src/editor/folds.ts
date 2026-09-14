@@ -12,7 +12,6 @@
  * tree-sitter tree at all. It is also what VS Code falls back to.
  */
 
-/** What a fold command asks the editor for. */
 export type FoldOp = 'fold' | 'unfold' | 'foldAll' | 'unfoldAll'
 
 /** A collapsed block: `start` stays on screen, `start+1`…`end` are hidden. */
@@ -182,7 +181,6 @@ export function innermostRegion(regions: FoldRegion[], line: number): FoldRegion
   return best
 }
 
-/** Drop what a text of `lines` lines can no longer hold, and merge duplicates. */
 function normalize(folds: FoldRegion[], lines: number): FoldRegion[] {
   const seen = new Set<number>()
   const kept: FoldRegion[] = []

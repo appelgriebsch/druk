@@ -59,7 +59,6 @@ const step = <T>(list: readonly T[], current: T, dir: 1 | -1): T =>
 
 const onOff = (value: boolean) => (value ? 'on' : 'off')
 
-/** The config store and every action that edits and persists it. */
 export function createSettings(deps: {
   /** The user's own settings — the whole `Config`, as its file holds it. */
   user: Config
@@ -73,7 +72,6 @@ export function createSettings(deps: {
   const { rootDir, status, editor, dimensions } = deps
   const [user, setUser] = createStore<Config>({ ...deps.user })
   const [project, setProject] = createStore<Partial<Config>>({ ...deps.project })
-  /** The effective config: what the rest of the editor reads. */
   const [config, setConfig] = createStore<Config>(resolveConfig(deps.user, deps.project))
   /** Which file the page shows and writes. User's own until asked otherwise. */
   const [scope, setScope] = createSignal<ConfigScope>('user')
@@ -83,7 +81,6 @@ export function createSettings(deps: {
   // what the last one left behind.
   setTransparency(config.transparent)
 
-  /** Paint a theme, without touching which theme the config says to use. */
   const paintTheme = (name: ThemeName) => {
     // A preview lands here on every keystroke, and repainting is not free — it
     // drops every buffer's style table and re-highlights the window.
@@ -156,7 +153,6 @@ export function createSettings(deps: {
 
   const toggleScope = () => setScope(current => (current === 'user' ? 'project' : 'user'))
 
-  /** Drop one project override; the user's value comes back into force. */
   const clearOverride = (key: keyof Config, label: string) => {
     if (project[key] === undefined) return
     patchLayer('project', { [key]: undefined })
@@ -360,7 +356,6 @@ export function createSettings(deps: {
           .map(part => `.${part}`)
           .join(' ')
 
-  /** One entry as the picker draws it — file types, then what runs over them. */
   const formatterOption = (key: string, command: string[]) =>
     `${extensionLabel(key)} → ${command.join(' ')}`
 
@@ -481,7 +476,6 @@ export function createSettings(deps: {
     )
   }
 
-  /** One shortcut as the page's list shows it: state, command, key in force. */
   const bindingLabel = (spec: Bindable) => {
     const key = keymap().display.get(spec.id) || 'unbound'
     return `${keymap().custom.has(spec.id) ? '*' : ' '} ${spec.label} — ${key}`
@@ -564,7 +558,6 @@ export function createSettings(deps: {
     status.say(`LSP server "${id}" ${disabled ? 'enabled' : 'disabled'}`)
   }
 
-  /** The page's one-line summary of a server: state, id, and the command it runs. */
   const serverLabel = (id: string, command: string[]) => {
     const override = view().lspServers[id]
     const enabled = override === undefined || override.length > 0

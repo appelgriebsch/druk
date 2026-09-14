@@ -295,7 +295,6 @@ export function applyCompletion(
   return { content: next, cursor: positionOf(next, cursorOffset) }
 }
 
-/** How the menu draws a kind: one glyph, and a palette group the UI maps to a color. */
 export type KindGroup = 'fn' | 'var' | 'type' | 'module' | 'keyword' | 'text'
 
 const KIND_GROUPS: Record<number, { glyph: string; group: KindGroup }> = {
@@ -358,7 +357,6 @@ const KIND_NAMES: Record<number, string> = {
   25: 'type parameter',
 }
 
-/** What the footer calls the selected item's kind. */
 export function kindName(kind: number | undefined): string {
   return KIND_NAMES[kind ?? 0] ?? 'text'
 }
@@ -395,7 +393,6 @@ export function plainMarkup(doc: string | MarkupContent | undefined): string {
   )
 }
 
-/** The signature and documentation the menu's detail panel shows for one item. */
 export interface ItemInfo {
   detail: string
   documentation: string

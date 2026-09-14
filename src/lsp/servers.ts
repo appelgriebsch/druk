@@ -66,7 +66,6 @@ export function servers(): ServerSpec[] {
   return fromExtensions
 }
 
-/** The line that tells a user how to install `spec` themselves. */
 export function installHint(install: ServerInstall): string {
   if (install.kind === 'npm') return `npm i -g ${install.packages.join(' ')}`
   if (install.kind === 'download') return `Download it from ${install.url}`
@@ -119,7 +118,6 @@ export function resolveServers(
     .filter(resolved => resolved !== null)
 }
 
-/** The first server for `filetype` — what the settings page and its tests ask about. */
 export function resolveServer(
   filetype: string | undefined,
   overrides: Record<string, string[]>,

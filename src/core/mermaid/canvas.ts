@@ -130,5 +130,3 @@ export class Canvas {
     })
   }
 }
-
-/** Columns a line of segments occupies. */

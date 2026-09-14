@@ -406,7 +406,6 @@ export function spawnLspClient(options: LspClientOptions) {
 
     pullDiagnostics,
 
-    /** Whether `executeCommand` may be sent this command at all. */
     supportsCommand(command: string): boolean {
       return commands.has(command)
     },
@@ -421,7 +420,6 @@ export function spawnLspClient(options: LspClientOptions) {
       return request('workspace/executeCommand', { command, arguments: args }).catch(() => null)
     },
 
-    /** Documents currently synced, as project-relative paths — the status page's list. */
     documents(): string[] {
       return [...versions.keys()].map(uri => relative(options.rootDir, fileURLToPath(uri)))
     },

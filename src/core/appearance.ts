@@ -97,7 +97,6 @@ export function detectAppearance(): Appearance | null {
   return null
 }
 
-/** One probe, off the event loop. */
 function runProbe(probe: Probe): Promise<Appearance | null> {
   return new Promise(resolve => {
     let child: ReturnType<typeof spawn>

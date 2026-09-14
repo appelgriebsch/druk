@@ -67,7 +67,6 @@ test('palette filters from root and previews a theme before confirming', async (
   await pressEscape(t)
   expect(bgColors(t)).toContain(DARK_BG)
 
-  // Re-open, filter, and confirm.
   await openPalette(t)
   await press(t, i => void i.typeText('light'))
   await press(t, i => i.pressEnter())

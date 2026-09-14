@@ -47,7 +47,6 @@ export function createEditorBridge(vim: boolean) {
     setHistory(prev => ({ kind, key: (prev?.key ?? 0) + 1 }))
   const requestGoto = (line: number, col: number) =>
     setGoto(prev => ({ line, col, key: (prev?.key ?? 0) + 1 }))
-  /** Push `content` into the active editor as one undoable step. */
   const pushEdit = (content: string) => setEdit(prev => ({ content, key: (prev?.key ?? 0) + 1 }))
   const requestLineOp = (op: 'comment' | 'up' | 'down' | 'duplicate' | 'delete') =>
     setLineOp(prev => ({ op, key: (prev?.key ?? 0) + 1 }))

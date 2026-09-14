@@ -49,7 +49,6 @@ interface Placed {
   y: number
 }
 
-/** An edge as drawn: one hop between adjacent layers. */
 interface Segment {
   from: string
   to: string

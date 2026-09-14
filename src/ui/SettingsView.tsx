@@ -95,7 +95,6 @@ export function SettingsView(props: SettingsViewProps) {
     setIndex(0)
   }
 
-  /** Enter's meaning: open the row's edit or list when it has one, step otherwise. */
   const activate = (row: SettingRow) => {
     if (row.edit) setEditing(row.edit)
     else if (row.select) setPicking(true)
@@ -220,7 +219,6 @@ export function SettingsView(props: SettingsViewProps) {
     )
   }
 
-  /** Which of the two files is on show — the page is otherwise identical. */
   const title = () => ` Settings — ${props.scope === 'project' ? 'Project' : 'User'}`
 
   /** Long spelling when the pane can afford it, initials beside a sidebar. */

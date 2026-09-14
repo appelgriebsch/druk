@@ -83,7 +83,6 @@ export async function removeAll(
 const copyInto = (from: string, to: string) =>
   fs.promises.cp(from, to, { recursive: true, force: false, errorOnExist: true })
 
-/** Put each target into `dir` with `transfer`, one at a time, reporting progress. */
 async function transferAll(
   targets: string[],
   dir: string,
@@ -111,7 +110,6 @@ async function transferAll(
   return { done, failed, moved }
 }
 
-/** Copy each target into `dir`, one entry at a time. `name` resolves collisions. */
 export const copyAll = (
   targets: string[],
   dir: string,

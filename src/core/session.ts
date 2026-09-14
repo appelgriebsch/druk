@@ -59,7 +59,6 @@ export function loadSession(rootDir: string): Session {
   }
 }
 
-/** Folders druk has been opened on, most recent first; deleted ones dropped. */
 export function recentProjects(): { path: string; touchedAt: number }[] {
   return Object.entries(readAll())
     .filter(([path]) => exists(path))

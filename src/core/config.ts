@@ -30,7 +30,6 @@ export const CONFIG_FILE = join(
   'config.json',
 )
 
-/** Which of the two files a setting is read from or written to. */
 export type ConfigScope = 'user' | 'project'
 
 /** Project overrides live beside the project, the way `.vscode/` does. */
@@ -111,7 +110,6 @@ export interface Config {
    * works everywhere.
    */
   tooltips: boolean
-  /** Modal editing (normal / insert / visual). */
   vim: boolean
   /**
    * Shape of the caret. Ignored while `vim` is on, where the shape is how you tell
@@ -367,7 +365,6 @@ const VALIDATORS: { [K in keyof Config]: Validator<K> } = {
 
 const isConfigKey = (key: string): key is keyof Config => key in VALIDATORS
 
-/** Only the settings the JSON actually carries — the shape the project file has. */
 export function parsePartial(raw: unknown): Partial<Config> {
   const config: Partial<Config> = {}
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return config
@@ -395,7 +392,6 @@ export function resolveConfig(user: Config, project: Partial<Config>): Config {
   return config
 }
 
-/** Read the config file, falling back to defaults on any error or bad value. */
 export function loadConfig(): Config {
   try {
     return parse(JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8')))
@@ -404,7 +400,6 @@ export function loadConfig(): Config {
   }
 }
 
-/** The project's own overrides — nothing at all when it has no settings file. */
 export function loadProjectConfig(rootDir: string): Partial<Config> {
   try {
     return parsePartial(JSON.parse(fs.readFileSync(projectConfigFile(rootDir), 'utf8')))

@@ -1,6 +1,5 @@
 import type { ChangeArea, FileStatus } from './git'
 
-/** One changed file, as the source-control panel lists it. */
 export interface Change {
   path: string
   /** Relative to the project root, `/`-separated — what the tree is built from. */
@@ -47,13 +46,11 @@ export interface SectionRow {
 /** Which side of the upstream distance a commit sits on — VS Code's sync views. */
 export type CommitGroup = 'incoming' | 'outgoing'
 
-/** One commit the branch is ahead or behind its upstream by. */
 export interface UpstreamCommit {
   oid: string
   subject: string
 }
 
-/** A commit under its `Incoming` / `Outgoing` heading. */
 export interface CommitRow {
   kind: 'commit'
   depth: 1
@@ -224,7 +221,6 @@ function foldable(changes: readonly Change[], dir: string): string {
   }
 }
 
-/** The folder rels between `dir` (exclusive) and `folded` (inclusive). */
 function ancestorsUnder(dir: string, folded: string): string[] {
   if (folded === dir) return []
   return ancestorDirs(`${folded}/x`).filter(rel => rel.length > dir.length)

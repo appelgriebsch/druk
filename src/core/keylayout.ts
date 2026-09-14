@@ -61,7 +61,6 @@ export function capsChar(char: string, shift: boolean): string {
   return shift ? lower : upper
 }
 
-/** The US name of the key `key` is on, or its own name when it is one already. */
 export function latinKey(key: { name: string; baseCode?: number }): string {
   const name = key.name
   if (name.length !== 1 || name.charCodeAt(0) < 128) return name

@@ -38,7 +38,6 @@ import type { Status } from './status'
 /** Rows the activation offer draws; `ChoiceModal` has no scroll of its own. */
 const MAX_ACTIVATION_CHOICES = 8
 
-/** What an extension adds, in the words the prompt and the palette use. */
 function summarize(entry: MarketEntry): string {
   const counts = [
     [entry.provides.themes.length, 'theme'],
@@ -313,7 +312,6 @@ export function createMarket(deps: {
     status.say(`Removed extension "${id}"`)
   }
 
-  /** The palette's "Check for extension updates": always a fetch, always an answer. */
   const checkNow = async (): Promise<void> => {
     const before = catalog().length
     const fresh = await refresh(true)
@@ -342,7 +340,7 @@ export function createMarket(deps: {
    */
   const suggestForFiletype = (filetype: string): void => {
     if (!settings.config.extensionUpdates || !settings.config.lsp) return
-    // Marked before the await, not after: `clientFor` asks on every sync of
+    // Marked before the await, not after: `clientsFor` asks on every sync of
     // every open document, so a check that waited for the fetch would queue a
     // dozen of them before the first one answered.
     if (asked.has(filetype)) return
@@ -376,7 +374,6 @@ export function createMarket(deps: {
     }
   }
 
-  /** The startup pass: refresh, apply updates, then offer what the config wants. */
   const check = async (): Promise<void> => {
     if (!settings.config.extensionUpdates) return
     await ready()

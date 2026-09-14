@@ -114,7 +114,6 @@ export function restoreWorkspace(rootDir: string, single: string | null) {
 
 export type RestoredWorkspace = ReturnType<typeof restoreWorkspace>
 
-/** Open buffers and tabs: opening, closing, saving, and staying true to the disk. */
 export function createWorkspace(deps: {
   rootDir: string
   /** `druk file.ts`: single-file mode leaves the folder's saved session alone. */
@@ -228,7 +227,6 @@ export function createWorkspace(deps: {
     panes.setFocus('editor')
   }
 
-  /** Promote the preview tab to a permanent one (click, double-click, edit). */
   const pinTab = (path: string) => {
     if (previewPath() === path) setPreviewPath(null)
   }
@@ -261,7 +259,6 @@ export function createWorkspace(deps: {
     setRecentlyClosed(prev => [...prev.filter(p => p !== path), path])
   }
 
-  /** Bring back the most recently closed tab whose file still exists. */
   const reopenTab = () => {
     const stack = [...recentlyClosed()]
     while (stack.length > 0) {
@@ -275,7 +272,6 @@ export function createWorkspace(deps: {
     say('No closed tab to reopen', 'warn')
   }
 
-  /** Close a batch, asking once if any of them has unsaved edits. */
   const closeTabs = (paths: string[], done: string) => {
     const dirty = paths.filter(path => buffers[path]?.dirty)
     if (dirty.length > 0) {
@@ -294,7 +290,6 @@ export function createWorkspace(deps: {
     return path && isMarkdownPath(path) && renderedPaths().includes(path) ? path : null
   }
 
-  /** Swap the active markdown tab between the rendered document and its text. */
   const toggleRendered = () => {
     const path = activePath()
     if (!path || !isMarkdownPath(path)) {
@@ -311,13 +306,10 @@ export function createWorkspace(deps: {
   /** Every tab in strip order — what Ctrl+←/→ walks. */
   const views = () => tabs()
 
-  /** Which tab is on screen. */
   const activeView = () => activePath()
 
-  /** Show the tab `id` names. */
   const showView = (id: string) => openFile(id)
 
-  /** Close the tab `id` names. */
   const closeView = (id: string) => closeTab(id)
 
   const switchTab = (delta: number) => {
@@ -584,7 +576,6 @@ export function createWorkspace(deps: {
     )
   }
 
-  /** Write the buffer to disk unconditionally and re-sync its mtime. */
   const writeBuffer = (
     path: string,
     content: string,
@@ -720,7 +711,6 @@ export function createWorkspace(deps: {
     formatPath(path)
   }
 
-  /** Format every open text tab that has a matching formatter. */
   const formatOpen = () => {
     const paths = tabs().filter(path => buffers[path] && formatterFor(path, config.formatters))
     if (paths.length === 0) return say('Nothing to format')
@@ -1058,7 +1048,6 @@ export function createWorkspace(deps: {
     return parts.length > 0 ? parts.join(' · ') : null
   }
 
-  /** Point every open tab, buffer and the active/preview slots at moved paths. */
   const remapPaths = (remap: (path: string) => string) => {
     setTabs(prev => prev.map(remap))
     // Snapshotted first: moving a buffer writes to the store being walked.

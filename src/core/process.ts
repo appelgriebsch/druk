@@ -112,7 +112,6 @@ export function run(bin: string, args: string[], options: RunOptions): Promise<P
 /** Whether `result` failed because the program is not there at all. */
 export const notInstalled = (result: ProcessResult): boolean => result.error?.code === 'ENOENT'
 
-/** The first non-empty line of `text`, which is the useful half of most tool output. */
 export function firstLine(text: string): string {
   return text.trim().split('\n')[0]?.trim() ?? ''
 }

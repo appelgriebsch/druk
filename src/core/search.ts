@@ -37,7 +37,6 @@ export function buildQuery(query: string, options: SearchOptions = {}): RegExp |
   }
 }
 
-/** Lines around a match, for a preview. */
 export interface Context {
   /** 0-based index of `lines[0]`. */
   start: number
@@ -306,7 +305,6 @@ export function listFiles(root: string, limit = 5000): string[] {
   return files
 }
 
-/** Replace every occurrence, matching exactly what `searchText` matched. */
 export function replaceAll(
   text: string,
   query: string,

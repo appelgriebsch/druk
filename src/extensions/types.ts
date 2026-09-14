@@ -17,7 +17,6 @@ export type ExtensionCategory = 'language' | 'lsp' | 'theme' | 'icons'
 /** Every category there is, in the order a list of them reads best. */
 export const CATEGORIES: ExtensionCategory[] = ['language', 'lsp', 'theme', 'icons']
 
-/** One extension's contributions, already validated. */
 export interface Extension {
   id: string
   name: string

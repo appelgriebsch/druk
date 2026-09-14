@@ -51,7 +51,6 @@ const isFile = (path: string): boolean => {
   }
 }
 
-/** The quoted run `col` sits in — the specifier of an import, most of the time. */
 function quotedAt(lineText: string, col: number): string | null {
   for (let at = 0; at < lineText.length; at++) {
     const quote = lineText[at]!
@@ -146,7 +145,6 @@ function parseJsonc(text: string): unknown {
   return JSON.parse(out)
 }
 
-/** The next character that is neither whitespace nor comment, or '' at the end. */
 function nextMeaningful(text: string, from: number): string {
   for (let at = from; at < text.length; at++) {
     const char = text[at]!
@@ -166,7 +164,6 @@ function nextMeaningful(text: string, from: number): string {
   return ''
 }
 
-/** A project's alias map, as the config that declared it means it. */
 interface Aliases {
   /** What `paths` entries are relative to: `baseUrl`, else the config's folder. */
   base: string

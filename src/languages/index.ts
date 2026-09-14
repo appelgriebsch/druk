@@ -93,7 +93,6 @@ export function languageFor(filetype: string | undefined): Language | undefined 
   return filetype ? registry.get(filetype) : undefined
 }
 
-/** What to call `filetype` on screen. */
 export function languageLabel(filetype: string): string {
   return languageFor(filetype)?.label ?? filetype
 }

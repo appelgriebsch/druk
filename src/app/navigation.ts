@@ -6,7 +6,6 @@ import type { Panes } from './panes'
 import type { Status } from './status'
 import type { Workspace } from './workspace'
 
-/** One place the editor has been: which tab, and where the cursor sat in it. */
 interface Stop {
   /** A view id — a file path, or the diff tab's own id. */
   id: string

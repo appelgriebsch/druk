@@ -32,7 +32,6 @@ const MODIFIERS: Record<string, 'ctrl' | 'alt'> = {
   shift: 'alt',
 }
 
-/** Spellings a user may reasonably type for a named key. */
 const ALIASES: Record<string, string> = {
   '←': 'left',
   '→': 'right',
@@ -75,7 +74,6 @@ const NAMED = new Set([
   'insert',
 ])
 
-/** How a chord is written back out — the spelling a menu shows. */
 const DISPLAY: Record<string, string> = {
   left: '←',
   right: '→',

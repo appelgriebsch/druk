@@ -62,7 +62,6 @@ export function removeLines(text: string, from: number, to: number): string {
   return lines.join('\n')
 }
 
-/** Insert a copy of lines `from`..`to` directly below them. */
 export function duplicateLines(text: string, from: number, to: number): string {
   const lines = text.split('\n')
   lines.splice(to + 1, 0, ...lines.slice(from, to + 1))

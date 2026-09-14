@@ -48,7 +48,6 @@ const unquote = (text: string) =>
     .replace(/^["'`](.*)["'`]$/s, '$1')
     .replace(/<br\s*\/?>/gi, ' ')
 
-/** Lines with their comments and blank space taken off, `end` markers kept. */
 function statements(source: string): string[] {
   return source
     .split('\n')

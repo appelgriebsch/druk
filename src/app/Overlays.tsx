@@ -63,7 +63,6 @@ const searchFlags = (options: SearchOptions) => {
   return parts.length > 0 ? ` (${parts.join(', ')})` : ''
 }
 
-/** The transient full-screen surfaces: search, pickers, palette, help, update. */
 export function createOverlays(deps: {
   renderer: { getSelection: () => { getSelectedText: () => string } | null }
   promptState: PromptState

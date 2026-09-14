@@ -123,7 +123,6 @@ const unicode: IconTheme = {
 
 export const BUILTIN_ICON_THEMES: IconTheme[] = [unicode]
 
-/** Every theme by id, built-ins and whatever extensions registered. */
 const registry: Record<string, IconTheme> = Object.fromEntries(
   BUILTIN_ICON_THEMES.map(theme => [theme.id, theme]),
 )

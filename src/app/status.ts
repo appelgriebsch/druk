@@ -13,7 +13,6 @@ export interface Busy {
   total?: number
 }
 
-/** The status bar's message and the one progress slot long operations share. */
 export function createStatus() {
   const [status, setStatus] = createSignal<{ msg: string; tone: Tone }>({
     msg: READY,

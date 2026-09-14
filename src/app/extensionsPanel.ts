@@ -87,7 +87,6 @@ export function createExtensionsPanel(deps: {
       .filter(row => matches(`${row.label} ${row.id} ${row.about} ${row.keywords}`)),
   )
 
-  /** Everything the registry offers that is not already installed. */
   const availableList = createMemo(() => {
     const held = new Set(extensions().map(extension => extension.id))
     return market
@@ -171,7 +170,6 @@ export function createExtensionsPanel(deps: {
     toggleSection(current.id)
   }
 
-  /** Enter: fold a heading, flip an installed one, install an available one. */
   const activate = (index = at()) => {
     moveTo(index)
     const current = rows()[Math.max(0, Math.min(index, rows().length - 1))]

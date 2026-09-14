@@ -14,15 +14,12 @@ export interface ServerLogLine {
   text: string
 }
 
-/** Everything the status page shows about one server. */
 export interface ServerView {
   id: string
   /** The command actually spawned — project copy, druk's install, or PATH. */
   command: string[]
   state: ServerState
-  /** Why it failed, when it did. */
   error: string | null
   logs: ServerLogLine[]
-  /** Documents open in the server right now, as project-relative paths. */
   docs: string[]
 }

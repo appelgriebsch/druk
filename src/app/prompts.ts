@@ -69,7 +69,6 @@ export function createPromptState() {
 
 export type PromptState = ReturnType<typeof createPromptState>
 
-/** Answering prompts: what each one asks, and what saying yes actually does. */
 export function createPromptHandlers(deps: {
   renderer: { destroy: () => void }
   state: PromptState
@@ -189,7 +188,6 @@ export function createPromptHandlers(deps: {
     }
   }
 
-  /** A stash picked from the list: ask what to do with it. */
   const chooseStash = (ref: string) => {
     const p = prompt()
     setPrompt(null)
@@ -199,7 +197,6 @@ export function createPromptHandlers(deps: {
     setPrompt({ kind: 'stashAction', repo: p.repo, ref: entry.ref, message: entry.message })
   }
 
-  /** Apply, pop or drop the stash the picker chose. */
   const chooseStashAction = (action: string) => {
     const p = prompt()
     setPrompt(null)
@@ -239,7 +236,6 @@ export function createPromptHandlers(deps: {
     setPrompt({ kind: 'remoteRemoveConfirm', repo: p.repo, name: remote.name, url: remote.url })
   }
 
-  /** A commit picked from the file's history: open it over the editor slot. */
   const chooseHistoryCommit = (oid: string) => {
     const p = prompt()
     setPrompt(null)
@@ -288,7 +284,6 @@ export function createPromptHandlers(deps: {
     if (chosen) void lsp.install(p.id, p.name, p.install, chosen)
   }
 
-  /** An appearance picked from what a fresh install brought: apply it. */
   const chooseActivation = (choice: string) => {
     const p = prompt()
     setPrompt(null)
@@ -296,7 +291,6 @@ export function createPromptHandlers(deps: {
     if (p.choices.some(candidate => candidate.id === choice)) market.activate(choice)
   }
 
-  /** Carry out whatever the open confirm prompt was asking about. */
   const confirmPrompt = () => {
     const p = prompt()
     setPrompt(null)

@@ -25,7 +25,6 @@ export interface CommitModalProps {
   onCancel: () => void
 }
 
-/** Pick which of the changed files a commit should carry. */
 export function CommitModal(props: CommitModalProps) {
   const dimensions = useTerminalDimensions()
   const [cursor, setCursor] = createSignal(0)

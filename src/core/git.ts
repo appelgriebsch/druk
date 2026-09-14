@@ -607,7 +607,6 @@ export async function comparisonFileContent(
   }
 }
 
-/** Metadata and first-parent file changes for one commit. */
 export async function comparisonCommitDetail(
   cwd: string,
   oid: string,
@@ -728,7 +727,6 @@ function discardMode(repo: string, entry: PorcelainEntry): DiscardMode {
   return pathInHead(repo, entry.path) ? 'restore' : 'delete'
 }
 
-/** Hash every part of the selected change whose replacement the user is approving. */
 function discardFingerprint(repo: string, entry: PorcelainEntry): string | null {
   const paths = entry.source ? [entry.path, entry.source] : [entry.path]
   const head = git(repo, ['rev-parse', '--verify', 'HEAD'])
@@ -998,7 +996,6 @@ function readCheckIgnore(
   return ignored
 }
 
-/** Whether any directory between `cwd` and `path` is a symlink. */
 function beyondSymlink(cwd: string, path: string, cache: Map<string, boolean>): boolean {
   if (!path.startsWith(`${cwd}/`)) return false
   for (let dir = dirname(path); dir.length > cwd.length; dir = dirname(dir)) {
@@ -1521,7 +1518,6 @@ export interface StashEntry {
   message: string
 }
 
-/** Every stash, newest first — what the Stashes… picker lists. */
 export function stashList(cwd: string): StashEntry[] {
   const run = git(cwd, ['stash', 'list', '--format=%gd%x1f%gs'], 5000)
   if (run.status !== 0) return []
@@ -1546,7 +1542,6 @@ export function stashDrop(cwd: string, ref: string): Promise<GitResult> {
   return mutate(cwd, ['stash', 'drop', ref])
 }
 
-/** Every tag, newest first — what the Delete tag… picker lists. */
 export function listTags(cwd: string): string[] {
   const run = git(cwd, ['tag', '--sort=-creatordate'], 5000)
   if (run.status !== 0) return []
@@ -1566,7 +1561,6 @@ export interface Remote {
   url: string
 }
 
-/** The configured remotes, with their fetch URLs. */
 export function listRemotes(cwd: string): Remote[] {
   const run = git(cwd, ['remote', '-v'], 5000)
   if (run.status !== 0) return []
@@ -1587,7 +1581,6 @@ export function removeRemote(cwd: string, name: string): Promise<GitResult> {
   return mutate(cwd, ['remote', 'remove', name])
 }
 
-/** The last fifty commits that touched `relPath`, renames followed — the timeline. */
 export function fileHistory(cwd: string, relPath: string): { oid: string; subject: string }[] {
   const run = git(
     cwd,
@@ -1638,7 +1631,6 @@ export function pull(cwd: string): Promise<GitResult> {
   return mutate(cwd, ['pull', '--ff-only'])
 }
 
-/** Create `name` off `from` (HEAD when null) and switch to it. */
 export function createBranch(cwd: string, name: string, from: string | null): Promise<GitResult> {
   return mutate(cwd, from ? ['checkout', '-b', name, from] : ['checkout', '-b', name])
 }

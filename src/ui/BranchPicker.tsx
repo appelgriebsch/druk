@@ -17,7 +17,6 @@ export interface BranchPickerProps {
   onClose: () => void
 }
 
-/** Pick a branch — to switch to, branch off, merge, rename or delete. */
 export function BranchPicker(props: BranchPickerProps) {
   const dimensions = useTerminalDimensions()
   const [query, setQuery] = createSignal('')

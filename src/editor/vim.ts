@@ -15,7 +15,6 @@ export const MODE_LABELS: Record<VimMode, string> = {
   visual: 'VISUAL',
 }
 
-/** Mutable state a vim session carries between keystrokes. */
 export interface VimState {
   mode: VimMode
   pending: string // partial operator, e.g. "d" waiting for a motion, or "g"
@@ -112,7 +111,6 @@ const MOTION_KEYS = new Set([
 const FIND_KEYS = new Set(['f', 'F', 't', 'T'])
 const OPPOSITE: Record<FindKind, FindKind> = { f: 'F', F: 'f', t: 'T', T: 't' }
 
-/** Motions shared by normal and visual mode. Returns true if `k` was a motion. */
 function motion(editor: Editor, k: string, state: VimState, count: number, counted: boolean) {
   if (!MOTION_KEYS.has(k)) return false
   // A cursor move with a selection live collapses it instead of moving, so in visual
@@ -210,7 +208,6 @@ function deleteLine(editor: Editor, state: VimState, count: number): void {
   for (let i = 0; i < count; i++) editor.deleteLine()
 }
 
-/** What `d` and `c` delete, by the key that follows the operator. */
 const OPERATOR_TARGETS: Record<string, (editor: Editor, count: number) => void> = {
   w: (e, n) => {
     for (let i = 0; i < n; i++) e.deleteWordForward()
@@ -222,7 +219,6 @@ const OPERATOR_TARGETS: Record<string, (editor: Editor, count: number) => void> 
   0: e => e.deleteToLineStart(),
 }
 
-/** First character offset of the line containing `offset`. */
 function lineStart(text: string, offset: number): number {
   const idx = text.lastIndexOf('\n', offset - 1)
   return idx + 1
@@ -412,7 +408,6 @@ function handleTextObject(editor: Editor, k: string, state: VimState): boolean {
   return true
 }
 
-/** True when the caret sits past the last character of its line. */
 function atLineEnd(editor: Editor): boolean {
   const { row, col } = editor.logicalCursor
   return col >= (editor.plainText.split('\n')[row]?.length ?? 0)

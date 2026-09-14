@@ -20,8 +20,6 @@ import {
 import type { Harness } from './helpers'
 import { tempDir } from './temp'
 
-// ── Notes, and where they live ─────────────────────────────────────────────
-
 test('notes survive a restart, and clearing forgets the project', () => {
   const file = join(tempDir('druk-notes-'), 'review.json')
   const note = {
@@ -40,8 +38,6 @@ test('notes survive a restart, and clearing forgets the project', () => {
   saveNotes('/p', [], { now: 2, file })
   expect(loadNotes('/p', file)).toEqual([])
 })
-
-// ── The editor ──────────────────────────────────────────────────────────────
 
 const NOTES_PATH = join(process.env.XDG_CONFIG_HOME!, 'druk', 'review.json')
 
@@ -213,8 +209,6 @@ test('Backspace in the panel drops the note under the cursor', async () => {
   expect(t.captureCharFrame()).toContain('No notes yet')
 })
 
-// ── Threads ─────────────────────────────────────────────────────────────────
-
 test('r answers the remark under the cursor, and the thread reads as one', async () => {
   const t = await launch(fixture(PROJECT), {}, { width: 100, height: 24 })
   await openFile(t, 'a.ts')
@@ -319,8 +313,6 @@ test('a note taken on a selection carries the whole span', async () => {
   expect(t.captureCharFrame()).toContain('a.ts:1-2')
   await pressEscape(t)
 })
-
-// ── Another writer, while druk is open ──────────────────────────────────────
 
 test('a note written by another process appears, and its delete empties', async () => {
   const dir = fixture(PROJECT)

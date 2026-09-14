@@ -143,7 +143,6 @@ test('every advertised hotkey does something', async () => {
   const afterCut = readFileSync(join(dirCut, 'a.ts'), 'utf8')
   check('Ctrl+X cut', !afterCut.startsWith('alpha'))
 
-  // Paste what was just cut.
   await press(t, i => i.pressKey('v', { ctrl: true }))
   await press(t, i => i.pressKey('s', { ctrl: true }))
   const afterPaste = readFileSync(join(dirCut, 'a.ts'), 'utf8')

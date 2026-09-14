@@ -9,7 +9,6 @@ import type { Status } from './status'
 import type { Tree } from './tree'
 import type { Workspace } from './workspace'
 
-/** Moving, copying and deleting files — single, batched, and via the x/c/p clipboard. */
 export function createFileOps(deps: {
   rootDir: string
   status: Status
@@ -157,7 +156,6 @@ export function createFileOps(deps: {
     )
   }
 
-  /** Take the selection for a move or a copy; `p` drops it into the folder chosen next. */
   const takeForPaste = (mode: 'cut' | 'copy') => {
     const targets = tree.actionTargets()
     if (targets.length === 0) return say('Nothing selected', 'warn')
@@ -168,7 +166,6 @@ export function createFileOps(deps: {
     say(`${verb} ${what} — press p on the folder to ${mode === 'cut' ? 'move' : 'copy'} into`)
   }
 
-  /** Complete an `x` or `c` into whatever folder the selection is in or on. */
   const paste = () => {
     const { paths, mode } = clipboard()
     if (paths.length === 0) {
@@ -212,7 +209,6 @@ export function createFileOps(deps: {
     say(`${cancelled} cancelled`)
   }
 
-  /** Carry out a confirmed delete: close affected tabs, remove, re-land the cursor. */
   const deleteTargets = (targets: string[]) => {
     for (const target of targets) {
       if (workspace.tabs().includes(target)) workspace.closeTab(target, true)

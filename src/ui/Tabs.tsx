@@ -27,7 +27,6 @@ export interface TabsProps {
   tabs: TabInfo[]
   /** Columns the strip has — the editor's column, not the terminal's width. */
   width: number
-  /** `id` of the tab on screen. */
   activeId: string | null
   /** Whether the visit history has anywhere to go, each way. */
   canBack: boolean

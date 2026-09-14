@@ -47,7 +47,6 @@ export const projectExtensionsDir = (rootDir: string): string =>
 
 const MANIFEST = 'extension.json'
 
-/** Every manifest in one extensions folder: `<id>.json`, and `<id>/extension.json`. */
 function manifestsIn(dir: string): string[] {
   let entries: { name: string; isDir: boolean }[]
   try {
@@ -72,7 +71,6 @@ function manifestsIn(dir: string): string[] {
 // A signal: the settings page lists these, so a reload has to repaint it.
 const [loaded, setLoaded] = createSignal<ExtensionLoad>({ extensions: [], problems: [] })
 
-/** What the last load found — the palette's list and the settings page read this. */
 export const extensions = (): Extension[] => loaded().extensions
 
 /** Manifests that were wrong about something. `App` reports one on startup. */

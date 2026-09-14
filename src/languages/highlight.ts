@@ -162,7 +162,6 @@ export const DIFF_GROUPS = {
   meta: 'druk.diff.meta',
 } as const
 
-/** Shared style table used by every editor buffer (built from the active theme). */
 export function getSyntaxStyle(): SyntaxStyle {
   // Keyed on the painted theme: every theme's `keyword` (etc.) reuses the same
   // numeric id, so handing the editor a stale SyntaxStyle instance after a

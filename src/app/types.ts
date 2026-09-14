@@ -7,7 +7,6 @@ import type { PackageManager } from '../lsp/install'
 import type { FetchableInstall } from '../lsp/servers'
 import type { CommitVariant } from './git'
 
-/** Which pane owns the keyboard when no overlay is open. */
 export type Focus = 'tree' | 'editor'
 
 export interface FileBuffer {
@@ -32,7 +31,6 @@ export interface DiskSync {
   deleted: string[]
 }
 
-/** An unsaved buffer whose file also changed on disk. */
 export interface Conflict {
   path: string
   disk: string
@@ -185,7 +183,6 @@ export type Prompt =
 
 export type PromptKind = NonNullable<Prompt>['kind']
 
-/** What a yes/no prompt asks and how loudly it asks it. */
 export interface Confirmation {
   title: string
   message: string

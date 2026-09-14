@@ -33,7 +33,6 @@ export function currentVersion(): string {
   return '0.0.0'
 }
 
-/** True when `latest` is newer than `current`. */
 export function isNewer(latest: string, current: string): boolean {
   try {
     return Bun.semver.order(latest, current) === 1

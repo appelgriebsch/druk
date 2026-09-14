@@ -36,7 +36,6 @@ function renderDiagram(diagram: Diagram): Line[] | null {
   }
 }
 
-/** Plain text for a rendered diagram — what the tests and any log assert on. */
 export function diagramToText(lines: Line[]): string {
   return lines.map(line => line.map(segment => segment.text).join('')).join('\n')
 }

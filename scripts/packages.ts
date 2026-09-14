@@ -41,7 +41,6 @@ export function packageFileName(
   return format === 'deb' ? `druk_${version}_${arch}.deb` : `druk-${version}-1.${arch}.rpm`
 }
 
-/** The nfpm config for one target — the same for both formats it packages. */
 export function nfpmConfig(target: LinuxTarget, version: string, distDir = './dist'): string {
   return [
     `name: druk`,

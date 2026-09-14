@@ -1,6 +1,5 @@
 import type { StyleDefinitionInput } from '@opentui/core'
 
-/** Colors for chrome: panels, tabs, tree, status bar, cursor. */
 export interface ThemeUi {
   bg: string
   panelBg: string
