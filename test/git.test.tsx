@@ -10,7 +10,9 @@ import {
   failureLine,
   ignoredAmongAsync,
   KNOWN,
+  statusEntries,
   statusMap,
+  unstagePaths,
 } from '../src/core/git'
 import { THEMES } from '../src/themes'
 import { launch, press, settle, until } from './helpers'
@@ -414,4 +416,18 @@ test('a typechange is a modification, not an invisible file', () => {
   execFileSync('git', ['add', '.'], { cwd: dir })
 
   expect(statusMap(dir).get(join(dir, 'link-me'))).toBe('modified')
+})
+
+test('unstaging a staged rename takes its old name out of the index too', async () => {
+  const dir = repo('one\n')
+  const git = (...args: string[]) => execFileSync('git', args, { cwd: dir })
+  git('mv', 'a.ts', 'b.ts')
+  git('add', '-A')
+
+  const result = await unstagePaths(dir, ['b.ts'])
+  expect(result.ok).toBe(true)
+  // Without the rename source, `a.ts` stays staged as a deletion — the row the
+  // panel's `−` was pressed to get rid of.
+  expect(statusEntries(dir).get(join(dir, 'a.ts'))?.staged ?? null).toBeNull()
+  expect(statusEntries(dir).get(join(dir, 'b.ts'))?.staged ?? null).toBeNull()
 })

@@ -1452,10 +1452,26 @@ export function stagePaths(cwd: string, paths: readonly string[]): Promise<GitRe
  * the index entry is the whole of unstaging it.
  */
 export function unstagePaths(cwd: string, paths: readonly string[]): Promise<GitResult> {
-  const spec = paths.map(literal)
+  const spec = [...new Set([...paths, ...renameSources(cwd, paths)])].map(literal)
   return hasCommits(cwd)
     ? mutate(cwd, ['restore', '--staged', '--', ...spec])
     : mutate(cwd, ['rm', '-q', '--cached', '-r', '--', ...spec])
+}
+
+/**
+ * The old names of the staged renames `paths` covers. Porcelain reports a rename
+ * under its destination alone, so restoring that path leaves the *source* still
+ * staged as a deletion — a row the user never asked to keep, and what made
+ * unstaging a heading full of moved files leave one entry behind per move.
+ */
+function renameSources(cwd: string, paths: readonly string[]): string[] {
+  const wanted = paths.map(path => path.split(sep).join('/'))
+  const covers = (rel: string) => wanted.some(path => rel === path || rel.startsWith(`${path}/`))
+  return porcelainEntries(cwd).flatMap(entry =>
+    entry.source !== null && (entry.xy[0] === 'R' || entry.xy[0] === 'C') && covers(entry.path)
+      ? [entry.source]
+      : [],
+  )
 }
 
 /** Whether HEAD names a commit — false on a repository with nothing committed yet. */
