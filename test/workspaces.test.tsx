@@ -1,11 +1,11 @@
 import { expect, test } from 'bun:test'
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
 import { basename, join } from 'node:path'
 
 import { worktrees } from '../src/core/git'
-import { resolvedPath, workspaceEntries } from '../src/core/workspaces'
-import { fixture, launch, openFile, press, runCommand, settle, untilFrame } from './helpers'
+import { resolvedPath, workspaceEntries, worktreePath } from '../src/core/workspaces'
+import { fixture, launch, openFile, press, runCommand, settle, until, untilFrame } from './helpers'
 import type { Harness } from './helpers'
 import { initRepo } from './repo'
 import { tempDir } from './temp'
@@ -148,4 +148,47 @@ test('the open folder heads the list even when git has never heard of it', () =>
   const entries = workspaceEntries(plain, [])
   expect(entries[0]!.current).toBe(true)
   expect(entries[0]!.path).toBe(resolvedPath(plain))
+})
+
+test('worktreePath puts a new checkout beside the repository, slashes flattened', () => {
+  expect(worktreePath('/tmp/proj', 'feat/one')).toBe(join('/tmp', 'proj-feat-one'))
+})
+
+test('a new worktree is created and opened, and the branch comes with it', async () => {
+  const { main } = repoWithWorktree('feat')
+  const t = await launch(main, {}, { width: 120 })
+
+  await runCommand(t, 'New worktree')
+  await press(t, input => void input.typeText('spike'))
+  await press(t, input => input.pressEnter())
+
+  const at = worktreePath(resolvedPath(main), 'spike')
+  await until(t, () => existsSync(join(at, 'a.ts')))
+  // The switch is a remount on the new folder: its name heads the explorer.
+  await untilFrame(t, basename(at))
+})
+
+test('the worktree switcher lists the other checkouts, not the one you are in', async () => {
+  const { main } = repoWithWorktree('feat')
+  const t = await launch(main, {}, { width: 120 })
+
+  await runCommand(t, 'Switch worktree')
+  await settle(t)
+
+  const frame = t.captureCharFrame()
+  // One row: the checkout druk is open on is not something to switch to.
+  expect(frame).toContain('Switch worktree — 1')
+  expect(frame).toContain('feat')
+})
+
+test('removing a worktree confirms first, then deletes the checkout', async () => {
+  const { main, side } = repoWithWorktree('feat')
+  const t = await launch(main, {}, { width: 120 })
+
+  await runCommand(t, 'Remove worktree')
+  await press(t, input => input.pressEnter())
+  await untilFrame(t, 'remove it')
+
+  await press(t, input => input.pressEnter())
+  await until(t, () => !existsSync(side))
 })

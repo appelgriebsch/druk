@@ -527,7 +527,19 @@ quit prompt's question — the remount drops them and the saved session restores
 tabs from *disk* — and the folder left behind keeps its tabs, so switching back is
 where you were. The switch itself is a remount: `Root.tsx` keys `<App/>` on the
 workspace, since every controller is built from `rootDir` once, and the extensions,
-the project settings and the theme are reloaded for the new folder ahead of it),
+the project settings and the theme are reloaded for the new folder ahead of it.
+Worktrees are made and unmade from the same menu, since a worktree is a folder
+druk opens like any other: palette → Workspace → New worktree… asks for a branch
+name and nothing else — the folder is derived (`worktreePath` in
+`src/core/workspaces.ts`, a *sibling* of the repository named for the branch,
+since one inside it would show up in its own tree, searches and status), the
+branch is created or checked out depending on whether it already exists
+(`branchExists`), and the new checkout is opened the moment it is there, a
+worktree being made in order to work in it. Switch worktree… (`w` in the source
+control panel) is the switcher narrowed to the active repository's own
+checkouts, with the one you are in left off, and Remove worktree… picks from the
+same list and confirms — `git worktree remove` with no `--force`, so a checkout
+holding uncommitted work refuses to go, and the branch stays either way),
 the terminal's own window and tab named after what is open
 (`terminalTitle`, on, settings → Appearance → Terminal title — `● App.tsx — druk — druk`,
 the project's name alone with no file up; `src/core/title.ts` writes OSC 0 and gives the

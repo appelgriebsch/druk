@@ -56,6 +56,7 @@ const PROMPT_TITLES: Partial<Record<PromptKind, string>> = {
   reviewNote: 'Review note',
   reviewReply: 'Reply',
   workspaceOpen: 'Open folder',
+  newWorktree: 'New worktree branch',
 }
 
 /**
@@ -164,6 +165,8 @@ export function createPromptHandlers(deps: {
       })
     } else if (p.kind === 'workspaceOpen') {
       workspaces.switchTo(name)
+    } else if (p.kind === 'newWorktree') {
+      workspaces.createWorktree(p.repo, name)
     } else if (p.kind === 'newBranch') {
       branches.create(name, p.from)
     } else if (p.kind === 'renameBranch') {
@@ -250,6 +253,17 @@ export function createPromptHandlers(deps: {
     if (p.entries.some(entry => entry.path === dir)) workspaces.switchTo(dir)
   }
 
+  /** A checkout picked: switched to on the spot, removed behind a confirm. */
+  const chooseWorktree = (path: string) => {
+    const p = prompt()
+    setPrompt(null)
+    if (p?.kind !== 'worktreePick') return
+    const tree = p.trees.find(candidate => candidate.path === path)
+    if (!tree) return
+    if (p.mode === 'switch') return workspaces.switchTo(tree.path)
+    setPrompt({ kind: 'worktreeRemove', repo: p.repo, path: tree.path, branch: tree.branch })
+  }
+
   /** The kind chosen: the same prompt again, now asking for the words. */
   const chooseReviewKind = (kind: string) => {
     const p = prompt()
@@ -332,6 +346,8 @@ export function createPromptHandlers(deps: {
           touchesTree: { kind: 'followDisk', paths: p.target.affectedPaths },
           done: () => `Discarded changes in ${basename(p.target.path)}`,
         })
+      case 'worktreeRemove':
+        return workspaces.removeWorktreeAt(p.repo, p.path)
       case 'deleteBranch':
         return branches.remove(p.name, p.force)
       case 'mergeBranch':
@@ -511,6 +527,15 @@ export function createPromptHandlers(deps: {
           danger: true,
           message: `Remove remote "${p.name}" (${p.url})? Branch tracking against it is dropped.`,
         }
+      case 'worktreeRemove':
+        return {
+          title: 'Remove worktree',
+          verb: 'remove it',
+          danger: true,
+          // The branch stays: a worktree is a checkout of one, and deleting the
+          // folder is not deleting the work that was committed to it.
+          message: `Delete the checkout at ${p.path}${p.branch ? ` (${p.branch})` : ''}? The branch itself stays. Git refuses if it holds uncommitted changes.`,
+        }
       case 'deleteBranch':
         return {
           title: p.force ? 'Delete branch (force)' : 'Delete branch',
@@ -608,6 +633,7 @@ export function createPromptHandlers(deps: {
     chooseRemoteRemove,
     chooseHistoryCommit,
     chooseWorkspace,
+    chooseWorktree,
     cancelPrompt,
     promptTitle,
     promptValue,

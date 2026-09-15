@@ -463,6 +463,9 @@ export function installKeyboard(ctx: AppContext, actions: CommandActions) {
         case 'b':
           actions.gitSwitchBranch()
           break
+        case 'w':
+          actions.switchWorktree()
+          break
         // The review is a button of its own now, but it is still about the change
         // this panel lists, so the shortcut into it stays here.
         case 'r':

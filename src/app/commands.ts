@@ -76,6 +76,9 @@ export interface CommandActions {
   triggerCompletion: () => void
   switchWorkspace: () => void
   openWorkspace: () => void
+  newWorktree: () => void
+  switchWorktree: () => void
+  removeWorktree: () => void
   openSettings: () => void
   openProjectSettings: () => void
   problemsList: () => void
@@ -659,6 +662,16 @@ export function buildCommands(actions: CommandActions, ctx: CommandContext): Com
           run: actions.switchWorkspace,
         },
         { id: 'workspace.open', label: 'Open folder…', run: actions.openWorkspace },
+        // A worktree is a folder druk opens like any other, so the commands that
+        // make and unmake one sit beside the switcher rather than under Git.
+        {
+          id: 'workspace.worktreeSwitch',
+          label: 'Switch worktree…',
+          hint: 'w in source control',
+          run: actions.switchWorktree,
+        },
+        { id: 'workspace.worktreeNew', label: 'New worktree…', run: actions.newWorktree },
+        { id: 'workspace.worktreeRemove', label: 'Remove worktree…', run: actions.removeWorktree },
       ],
     },
     { id: 'settings', label: 'Settings', run: actions.openSettings },

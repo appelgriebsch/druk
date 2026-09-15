@@ -5,7 +5,7 @@
  */
 import { realpathSync } from 'node:fs'
 import { homedir } from 'node:os'
-import { basename } from 'node:path'
+import { basename, dirname, join } from 'node:path'
 
 import { isDirectory } from './fs'
 import { worktrees } from './git'
@@ -68,4 +68,13 @@ export function workspaceEntries(rootDir: string, repos: readonly string[]): Wor
   add(root, null, 'recent')
 
   return entries.toSorted((a, b) => Number(b.current) - Number(a.current))
+}
+
+/**
+ * Where a new worktree goes: a sibling of the repository named for its branch.
+ * Inside the repository it would be part of its own file tree, its searches and
+ * its status, which is a checkout showing up as untracked files in itself.
+ */
+export function worktreePath(repo: string, branch: string): string {
+  return join(dirname(repo), `${basename(repo)}-${branch.replace(/[/\\]+/g, '-')}`)
 }

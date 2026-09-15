@@ -1546,6 +1546,31 @@ export function worktrees(cwd: string): Worktree[] {
   return found
 }
 
+/**
+ * A new checkout of the repository at `path`. `create` is what decides the
+ * command: `worktree add -b` refuses a branch that already exists and a plain
+ * `worktree add` refuses one that does not, so the caller has to know which.
+ */
+export function addWorktree(
+  cwd: string,
+  path: string,
+  branch: string,
+  create: boolean,
+): Promise<GitResult> {
+  return mutate(
+    cwd,
+    create ? ['worktree', 'add', '-b', branch, path] : ['worktree', 'add', path, branch],
+  )
+}
+
+/**
+ * Delete a checkout and its administrative files. Git refuses one holding
+ * changes, which is the whole safety net here — druk never passes `--force`.
+ */
+export function removeWorktree(cwd: string, path: string): Promise<GitResult> {
+  return mutate(cwd, ['worktree', 'remove', path])
+}
+
 export interface StashEntry {
   /** `stash@{0}` — the name every stash command addresses one by. */
   ref: string
@@ -1677,10 +1702,14 @@ export function createBranch(cwd: string, name: string, from: string | null): Pr
 export function switchBranch(cwd: string, name: string, remote: boolean): Promise<GitResult> {
   if (!remote) return mutate(cwd, ['checkout', name])
   const local = localBranchName(name)
-  const exists = git(cwd, ['rev-parse', '--verify', '--quiet', `refs/heads/${local}`], 3000)
-  return exists.status === 0
+  return branchExists(cwd, local)
     ? mutate(cwd, ['checkout', local])
     : mutate(cwd, ['checkout', '-b', local, '--track', name])
+}
+
+/** Whether `name` is a local branch — what decides `-b` from a plain checkout. */
+export function branchExists(cwd: string, name: string): boolean {
+  return git(cwd, ['rev-parse', '--verify', '--quiet', `refs/heads/${name}`], 3000).status === 0
 }
 
 export function renameBranch(cwd: string, from: string, to: string): Promise<GitResult> {

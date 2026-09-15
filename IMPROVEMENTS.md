@@ -263,7 +263,7 @@ tests in `test/vim-find.test.tsx`.
 | ID | Item | Effort |
 | --- | --- | --- |
 | P4.1 | Recent files | M |
-| P4.2 | ~~Recent projects~~ — shipped: `Ctrl+Opt+W` switches workspace, listing the repository's worktrees and every folder druk remembers; palette → Workspace → Open folder… takes one by path | M |
+| P4.2 | ~~Recent projects~~ — shipped: `Ctrl+Opt+W` switches workspace, listing the repository's worktrees and every folder druk remembers; palette → Workspace → Open folder… takes one by path, and New / Switch / Remove worktree… make and unmake them | M |
 | P4.3 | Restore cursor + scroll per tab | M |
 | P4.4 | Jump back / forward | M |
 | P4.5 | Split panes | XL — after EditorPane split |

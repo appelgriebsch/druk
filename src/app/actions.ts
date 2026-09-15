@@ -697,6 +697,9 @@ export function createCommands(ctx: AppContext) {
     triggerCompletion: editor.requestCompletion,
     switchWorkspace: ctx.workspaces.pick,
     openWorkspace: ctx.workspaces.openPrompt,
+    newWorktree: ctx.workspaces.newWorktree,
+    switchWorktree: () => ctx.workspaces.pickWorktree('switch'),
+    removeWorktree: () => ctx.workspaces.pickWorktree('remove'),
     openSettings: () => {
       settings.setScope('user')
       // One page at a time: the slot under the settings page is the editor's.

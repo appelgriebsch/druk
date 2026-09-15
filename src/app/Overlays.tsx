@@ -61,6 +61,7 @@ type TagDeletePrompt = Extract<Prompt, { kind: 'tagDelete' }>
 type RemoteRemovePrompt = Extract<Prompt, { kind: 'remoteRemove' }>
 type FileHistoryPrompt = Extract<Prompt, { kind: 'fileHistory' }>
 type WorkspacePickPrompt = Extract<Prompt, { kind: 'workspacePick' }>
+type WorktreePickPrompt = Extract<Prompt, { kind: 'worktreePick' }>
 
 /** What the problems modal is showing: every open file's, or the cursor's line. */
 export type ProblemsScope = 'all' | 'cursor'
@@ -268,6 +269,7 @@ export function OverlayStack(props: { ctx: AppContext; commands: Accessor<Comman
   const remoteRemove = promptOf('remoteRemove')
   const fileHistory = promptOf('fileHistory')
   const workspacePick = promptOf('workspacePick')
+  const worktreePick = promptOf('worktreePick')
   const conflictSide = promptOf('mergeConflict')
 
   return (
@@ -408,6 +410,22 @@ export function OverlayStack(props: { ctx: AppContext; commands: Accessor<Comman
                 .join('  '),
             }))}
             onPick={prompts.chooseWorkspace}
+            onClose={prompts.cancelPrompt}
+          />
+        )}
+      </Show>
+      <Show when={worktreePick()}>
+        {(ask: () => WorktreePickPrompt) => (
+          <ListPicker
+            title={ask().mode === 'switch' ? 'Switch worktree' : 'Remove worktree'}
+            placeholder="Type part of a branch name or path…"
+            items={ask().trees.map(tree => ({
+              id: tree.path,
+              // Branch first: it is what one checkout is *for*, and the row is
+              // cut from the tail, where the path is the part worth losing.
+              label: [tree.branch ?? 'detached', shortenHome(tree.path)].join('  '),
+            }))}
+            onPick={prompts.chooseWorktree}
             onClose={prompts.cancelPrompt}
           />
         )}

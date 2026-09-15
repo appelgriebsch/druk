@@ -188,17 +188,18 @@ export function App(props: {
     lsp,
     prompts: promptState,
   })
+  const navigation = createNavigation({ workspace, editor, panes, status })
+  const fileOps = createFileOps({ rootDir, status, tree, workspace, renderer })
+  const gitOp = createGitOp({ git, status, workspace })
   const workspaces = createWorkspaces({
     rootDir,
     status,
     git,
+    gitOp,
     workspace,
     setPrompt: promptState.setPrompt,
     open: props.onOpenWorkspace,
   })
-  const navigation = createNavigation({ workspace, editor, panes, status })
-  const fileOps = createFileOps({ rootDir, status, tree, workspace, renderer })
-  const gitOp = createGitOp({ git, status, workspace })
   const branches = createBranches({ status, git, gitOp, prompts: promptState })
   const commitView = createCommitView({ status })
   // These two pages own their state outside the workspace, so their tab and that

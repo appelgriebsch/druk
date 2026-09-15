@@ -1,5 +1,5 @@
 import type { TextEncoding } from '../core/fs'
-import type { DiscardTarget, Remote, StashEntry } from '../core/git'
+import type { DiscardTarget, Remote, StashEntry, Worktree } from '../core/git'
 import type { NoteKind } from '../core/review'
 import type { SearchOptions } from '../core/search'
 import type { WorkspaceEntry } from '../core/workspaces'
@@ -175,6 +175,25 @@ export type Prompt =
       servers: { id: string; name: string }[]
     }
   | { kind: 'workspacePick'; entries: WorkspaceEntry[] }
+  /**
+   * A new checkout of the repository. The branch name is all it asks for — the
+   * folder is derived from it (`worktreePath`), since a worktree nobody has to
+   * name a directory for is the whole point of having the command.
+   */
+  | { kind: 'newWorktree'; repo: string }
+  /**
+   * The repository's checkouts. One list for both errands — `mode` is what Enter
+   * does with the one picked — so the rows are built and labelled once.
+   * `current` is the resolved path of the folder druk is open on.
+   */
+  | {
+      kind: 'worktreePick'
+      repo: string
+      mode: 'switch' | 'remove'
+      trees: Worktree[]
+      current: string
+    }
+  | { kind: 'worktreeRemove'; repo: string; path: string; branch: string | null }
   /** A folder typed by hand. */
   | { kind: 'workspaceOpen' }
   /** The quit prompt's question: the remount drops unsaved buffers. */
